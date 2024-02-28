@@ -1,26 +1,42 @@
 const EXAMTOPICS_BASE_URL = "https://www.examtopics.com/discussions";
+const FETCH_BATCH_SIZE = 10;
 
 const parser = new DOMParser();
 
 const getQuestionLinks = async (provider, exam) => {
-  let pageNumber = 1;
-  let url = `${EXAMTOPICS_BASE_URL}/${provider}/${pageNumber}`;
   // Get last page number first
-  let doc = await fetchPage(url);
-  const lastPageNumber = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerText);
+  let doc = await fetchPage(`${EXAMTOPICS_BASE_URL}/${provider}`);
+  const lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerText);
+  console.log(`Provider: ${provider}`);
+  console.log(`Exam: ${exam}`);
+  console.log(`Total ${lastPageIndex} pages`);
 
   let results = [];
-  console.log(`Total ${lastPageNumber} pages`);
-  for (pageNumber = 1; pageNumber <= lastPageNumber; pageNumber++) {
-    url = `${EXAMTOPICS_BASE_URL}/${provider}/${pageNumber}`;
-    if (pageNumber !== 1) {
-      doc = await fetchPage(url);
-    }
-    const links = Array.from(doc.getElementsByClassName("discussion-link"))
-      .map(e => e.href)
-      .filter(e => e.includes(exam));
-    results = results.concat(links);
-    console.log(`Parsed ${pageNumber} pages, ${results.length} links`);
+  const lastBatchIndex = Math.floor(lastPageIndex / FETCH_BATCH_SIZE);
+
+  for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
+    const startPageIndexInBatch = batchIndex * FETCH_BATCH_SIZE + 1;
+    // Get array of page index
+    const indexes = batchIndex === lastBatchIndex ?
+      Array(lastPageIndex - startPageIndexInBatch + 1).fill().map((e, i) => i + startPageIndexInBatch) :
+      Array(FETCH_BATCH_SIZE).fill().map((e, i) => i + startPageIndexInBatch);
+
+    // Fetch pages in batch
+    const promises = indexes.map(e =>
+      fetchPage(`${EXAMTOPICS_BASE_URL}/${provider}/${e}`)
+        .then(doc => {
+          const links = Array.from(doc.getElementsByClassName("discussion-link"))
+            .map(e => e.href)
+            .filter(e => e.includes(exam));
+          console.log(`Parsed page ${e}`);
+          return links;
+        })
+    );
+    // Concat the results
+    (await Promise.all(promises)).forEach(links => {
+      results = results.concat(links);
+    });
+    console.log(`Parsed ${batchIndex === lastBatchIndex ? lastPageIndex : (batchIndex + 1) * FETCH_BATCH_SIZE} pages`);
     // Prevent robot detection
     sleep(100);
   }
