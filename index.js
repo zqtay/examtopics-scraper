@@ -3,16 +3,31 @@ const FETCH_BATCH_SIZE = 10;
 
 const parser = new DOMParser();
 
+const fetchPage = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed request");
+  const body = await res.text();
+  const doc = parser.parseFromString(body, 'text/html');
+  return doc;
+};
+
+const sleep = (milliseconds) => {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds) {
+      break;
+    }
+  }
+};
+
 const getQuestionLinks = async (provider, exam) => {
   // Get last page number first
   let doc = await fetchPage(`${EXAMTOPICS_BASE_URL}/${provider}`);
   const lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerText);
-  console.log(`Provider: ${provider}`);
-  console.log(`Exam: ${exam}`);
   console.log(`Total ${lastPageIndex} pages`);
 
   let results = [];
-  const lastBatchIndex = Math.floor(lastPageIndex / FETCH_BATCH_SIZE);
+  const lastBatchIndex = Math.ceil(lastPageIndex / FETCH_BATCH_SIZE) - 1;
 
   for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
     const startPageIndexInBatch = batchIndex * FETCH_BATCH_SIZE + 1;
@@ -43,21 +58,68 @@ const getQuestionLinks = async (provider, exam) => {
   return results;
 };
 
-const fetchPage = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed request");
-  const body = await res.text();
-  const doc = parser.parseFromString(body, 'text/html');
-  return doc;
-};
+const getQuestions = async (links) => {
+  let results = [];
+  const lastPageIndex = links.length;
+  const lastBatchIndex = Math.ceil(lastPageIndex / FETCH_BATCH_SIZE) - 1;
 
-const sleep = (milliseconds) => {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds) {
-      break;
-    }
+  for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
+    const startIndexInBatch = batchIndex * FETCH_BATCH_SIZE;
+    const lastIndexInBatch = batchIndex === lastBatchIndex ?
+      lastPageIndex :
+      startIndexInBatch + FETCH_BATCH_SIZE - 1;
+    const batch = links.slice(startIndexInBatch, lastIndexInBatch + 1);
+
+    // Fetch pages in batch
+    const promises = batch.map(link =>
+      fetchPage(link)
+        .then(doc => {
+          const header = doc.querySelector(".question-discussion-header > div").innerText.trim();
+          const regex = /(\s*)Question #:\s(\d+)(\s*)Topic #:\s(\d+)/;
+          const match = header.match(regex);
+          const questionNumber = match ? match[2] : null;
+          const topicNumber = match ? match[4] : null;
+          const body = doc.querySelector(".question-body > .card-text").innerText.trim();
+          const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
+            .map(e => e.innerText.trim()
+              .replaceAll('\t', "")
+              .replaceAll('\n', ""));
+          const votes = Array.from(document.querySelectorAll('.vote-distribution-bar > div:not([data-original-title=""])'))
+            .map(e => e.innerText.trim());
+          const comments = Array.from(document.getElementsByClassName("comment-content"))
+            .map(e => e.innerText.trim());
+          console.log(`Parsed question ${questionNumber}`);
+          return {
+            topic: topicNumber,
+            question: questionNumber,
+            body,
+            options,
+            votes,
+            comments
+          };
+        })
+    );
+    // Concat the results
+    (await Promise.all(promises)).forEach(data => {
+      results.push(data);
+    });
+    console.log(`Parsed ${batchIndex === lastBatchIndex ? lastPageIndex : (batchIndex + 1) * FETCH_BATCH_SIZE} questions`);
+    // Prevent robot detection
+    sleep(100);
   }
+
+  return results;
 };
 
-const links = await getQuestionLinks("microsoft", "az-204");
+const main = async () => {
+  const provider = "microsoft";
+  const exam = "az-204";
+  console.log(`Provider: ${provider}`);
+  console.log(`Exam: ${exam}`);
+  const links = await getQuestionLinks(provider, exam);
+  const questions = await getQuestions(links);
+  console.log(questions);
+  return questions;
+};
+
+main();
