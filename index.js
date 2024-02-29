@@ -86,26 +86,30 @@ const getQuestions = async (links) => {
           const match = header.match(regex);
           const questionNumber = match ? match[2] : null;
           const topicNumber = match ? match[4] : null;
-          const body = doc.querySelector(".question-body > .card-text").innerText.trim();
+          const body = doc.querySelector(".question-body > .card-text").innerHTML;
           const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
             .map(e => e.innerText.trim()
               .replaceAll('\t', "")
               .replaceAll('\n', ""));
-		      const answer = doc.getElementsByClassName("correct-answer")[0].innerText.trim();
-		      const answer_description = doc.getElementsByClassName("answer-description")[0].innerText.trim();
-          const votes = Array.from(doc.querySelectorAll('.vote-distribution-bar > div:not([data-original-title=""])'))
-            .map(e => e.innerText.trim());
+          const answer = doc.getElementsByClassName("correct-answer")[0].innerText.trim();
+          const answer_description = doc.getElementsByClassName("answer-description")[0].innerText.trim();
+          let votes = doc.querySelector(".voted-answers-tally script").innerText;
+          if (votes) {
+            votes = JSON.parse(votes).map(e => ({
+              answer: e.voted_answers, 
+              count: e.vote_count, 
+              is_most_voted: e.is_most_voted
+            }));
+          }
           const comments = Array.from(doc.getElementsByClassName("comment-content"))
             .map(e => e.innerText.trim());
-
           console.log(`Parsed question ${questionNumber}`);
-
           return {
             topic: topicNumber,
             index: questionNumber,
             body,
-			      answer,
-			      answer_description,
+            answer,
+            answer_description,
             options,
             votes,
             comments
@@ -125,12 +129,10 @@ const getQuestions = async (links) => {
 const main = async () => {
   const provider = "microsoft";
   const exam = "az-204";
-  const start = 1;
-  const end = 3;
   console.log(`Provider: ${provider}`);
   console.log(`Exam: ${exam}`);
 
-  const links = await getQuestionLinks(provider, exam, start, end);
+  const links = await getQuestionLinks(provider, exam);
   console.log(links)
   const questions = await getQuestions(links);
   console.log(questions);
