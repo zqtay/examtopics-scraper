@@ -1,5 +1,5 @@
 const EXAMTOPICS_BASE_URL = "https://www.examtopics.com/discussions";
-const FETCH_BATCH_SIZE = 20;
+const FETCH_BATCH_SIZE = 10;
 
 const parser = new DOMParser();
 
@@ -25,13 +25,13 @@ const getQuestionLinks = async (provider, exam, start = 1, end = null) => {
   let lastPageIndex = end;
   if (!lastPageIndex) {
     const doc = await fetchPage(`${EXAMTOPICS_BASE_URL}/${provider}`);
-	lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerText);
+    lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerText);
   }
- 
+
   console.log(`Parsing from discussion page ${start} to ${lastPageIndex}`);
-  
+
   let results = [];
-  const lastBatchIndex = Math.ceil(lastPageIndex / FETCH_BATCH_SIZE) - 1;
+  const lastBatchIndex = Math.ceil((lastPageIndex - start) / FETCH_BATCH_SIZE) - 1;
 
   for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
     const startPageIndexInBatch = (batchIndex * FETCH_BATCH_SIZE) + start;
@@ -55,12 +55,11 @@ const getQuestionLinks = async (provider, exam, start = 1, end = null) => {
     (await Promise.all(promises)).forEach(links => {
       results = results.concat(links);
     });
-    console.log(`Parsed ${
-	  batchIndex === lastBatchIndex ? 
-	  (lastPageIndex - start + 1) : 
-	  (batchIndex + 1) * FETCH_BATCH_SIZE
-	} pages`);
-	console.log(`Collated ${results.length} question links`);
+    console.log(`Parsed ${batchIndex === lastBatchIndex ?
+      (lastPageIndex - start + 1) :
+      (batchIndex + 1) * FETCH_BATCH_SIZE
+      } pages`);
+    console.log(`Collated ${results.length} question links`);
   }
   return results;
 };
@@ -91,13 +90,13 @@ const getQuestions = async (links) => {
             .map(e => e.innerText.trim()
               .replaceAll('\t', "")
               .replaceAll('\n', ""));
-          const answer = doc.getElementsByClassName("correct-answer")[0].innerText.trim();
+          const answer = doc.getElementsByClassName("correct-answer")[0].innerHTML;
           const answer_description = doc.getElementsByClassName("answer-description")[0].innerText.trim();
-          let votes = doc.querySelector(".voted-answers-tally script").innerText;
+          let votes = doc.querySelector(".voted-answers-tally script")?.innerText;
           if (votes) {
             votes = JSON.parse(votes).map(e => ({
-              answer: e.voted_answers, 
-              count: e.vote_count, 
+              answer: e.voted_answers,
+              count: e.vote_count,
               is_most_voted: e.is_most_voted
             }));
           }
