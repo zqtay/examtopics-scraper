@@ -124,9 +124,7 @@ const getQuestions = async (links: string[]) => {
   return results;
 };
 
-export const scrape = async () => {
-  const provider = "microsoft";
-  const exam = "az-204";
+export const scrape = async (provider: string, exam: string) => {
   console.log(`Provider: ${provider}`);
   console.log(`Exam: ${exam}`);
 
