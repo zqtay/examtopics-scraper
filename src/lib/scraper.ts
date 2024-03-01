@@ -11,7 +11,7 @@ export type Question = {
   comments: string[];
 };
 
-const EXAMTOPICS_BASE_URL = "api/examtopics/discussions";
+const BASE_URL = "api/examtopics/discussions";
 const FETCH_BATCH_SIZE = 10;
 
 const getQuestionLinks = async (
@@ -20,7 +20,7 @@ const getQuestionLinks = async (
   // Get last page number first
   let lastPageIndex = end;
   if (!lastPageIndex) {
-    const doc = await fetchPage(`${EXAMTOPICS_BASE_URL}/${provider}`);
+    const doc = await fetchPage(`${BASE_URL}/${provider}`);
     lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerHTML.trim());
   }
   if (!start) start = 1;
@@ -39,7 +39,7 @@ const getQuestionLinks = async (
 
     // Fetch pages in batch
     const promises = indexes.map(e =>
-      fetchPage(`${EXAMTOPICS_BASE_URL}/${provider}/${e}`)
+      fetchPage(`${BASE_URL}/${provider}/${e}`)
         .then(doc => {
           const links = (Array.from(doc.getElementsByClassName("discussion-link")) as HTMLLinkElement[])
             .map((e) => e.href)
