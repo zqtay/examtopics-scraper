@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { fetchPage } from "@/lib/fetcher";
 import Dropdown from "@/components/dropdown";
 import Spinner from "@/components/spinner";
+import InputText from "@/components/inputtext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,6 +14,7 @@ const regex = /discussions\/(.*?)((\/|$))/;
 export default function Home() {
   const [providers, setProviders] = useState<{ label: string; value: string; }[]>();
   const [selectedProvider, setSelectedProvider] = useState<string>();
+  const [examCode, setExamCode] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,11 +45,16 @@ export default function Home() {
         onChange={value => setSelectedProvider(value as string)}
       />
       {selectedProvider}
+      <InputText
+        value={examCode}
+        onChange={e => setExamCode(e.target.value)}
+        placeholder="Exam code"
+      />
       <button
         className="p-2 rounded border"
         onClick={() => {
           if (selectedProvider)
-            scrape(selectedProvider, "");
+            scrape(selectedProvider, examCode);
         }}
       >
         Start
