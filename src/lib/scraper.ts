@@ -15,7 +15,7 @@ const PROXY_BASE_URL = "/api/examtopics";
 const ORIGIN_BASE_URL = "https://www.examtopics.com";
 const FETCH_BATCH_SIZE = 10;
 
-const getQuestionLinks = async (
+export const getQuestionLinks = async (
   provider: string, exam: string, start?: number, end?: number
 ) => {
   // Get last page number first
@@ -43,29 +43,44 @@ const getQuestionLinks = async (
       fetchPage(`${PROXY_BASE_URL}/discussions/${provider}/${index}`)
         .then(doc => {
           let links = (Array.from(doc.getElementsByClassName("discussion-link")))
-            .map(e => e.getAttribute('href'));
+            .map(e => e.getAttribute('href')?.replace(/\/+$/, ''));
           links = links.filter(e => {
-            return e !== null && e?.includes(exam)
+            return e !== null && e?.includes(exam);
           });
           console.log(`Parsed page ${index}`);
           return links as string[];
         })
-        .catch((error) => console.log(error))
     );
     // Concat the results
-    (await Promise.all(promises)).forEach(links => {
-      if (links) results = results.concat(links);
-    });
+    try {
+      (await Promise.all(promises)).forEach(links => {
+        if (links) results = results.concat(links);
+      });
+    }
+    catch (error) {
+      return {
+        status: "error",
+        data: {
+          lastIndex: startPageIndexInBatch,
+          links: results,
+        },
+      };
+    }
     console.log(`Parsed ${batchIndex === lastBatchIndex ?
       (lastPageIndex - start + 1) :
       (batchIndex + 1) * FETCH_BATCH_SIZE
       } pages`);
     console.log(`Collated ${results.length} question links`);
   }
-  return results;
+  return {
+    status: "success",
+    data: {
+      links: results,
+    },
+  };
 };
 
-const getQuestions = async (links: string[]) => {
+export const getQuestions = async (links: string[]) => {
   let results: Question[] = [];
   const lastPageIndex = links.length;
   const lastBatchIndex = Math.ceil(lastPageIndex / FETCH_BATCH_SIZE) - 1;
@@ -81,11 +96,9 @@ const getQuestions = async (links: string[]) => {
     const promises = batch.map(link =>
       fetchPage(`${PROXY_BASE_URL}${link}`)
         .then(doc => {
-          const header = doc.querySelector(".question-discussion-header > div")?.innerHTML.trim();
-          const regex = /(\s*)Question #:\s(\d+)(\s*)Topic #:\s(\d+)/;
-          const match = header?.match(regex);
+          const match = link?.match(/topic-(\d+)-question-(\d+)/);
+          const topicNumber = match ? match[1] : null;
           const questionNumber = match ? match[2] : null;
-          const topicNumber = match ? match[4] : null;
           const body = doc.querySelector(".question-body > .card-text")?.innerHTML.trim();
           const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
             .map(e => e.innerHTML.trim()
@@ -119,22 +132,27 @@ const getQuestions = async (links: string[]) => {
         .catch((error) => console.log(error))
     );
     // Concat the results
-    (await Promise.all(promises)).forEach(data => {
-      if (data) results.push(data);
-    });
+    try {
+      (await Promise.all(promises)).forEach(data => {
+        if (data) results.push(data);
+      });
+    }
+    catch (error) {
+      return {
+        status: "error",
+        data: {
+          lastIndex: startIndexInBatch,
+          links: results,
+        },
+      };
+    }
     console.log(`Parsed ${results.length} questions`);
   }
 
-  return results;
-};
-
-export const scrape = async (provider: string, exam: string) => {
-  console.log(`Provider: ${provider}`);
-  console.log(`Exam: ${exam}`);
-
-  const links = await getQuestionLinks(provider, exam);
-  console.log(links);
-  const questions = await getQuestions(links);
-  console.log(questions);
-  return questions;
+  return {
+    status: "success",
+    data: {
+      questions: results,
+    },
+  };
 };

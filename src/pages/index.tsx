@@ -1,5 +1,5 @@
 import { Inter } from "next/font/google";
-import { scrape } from "@/lib/scraper";
+import { Question, getQuestionLinks, getQuestions } from "@/lib/scraper";
 import { useEffect, useState } from "react";
 import Dropdown from "@/components/dropdown";
 import Spinner from "@/components/spinner";
@@ -13,6 +13,8 @@ export default function Home() {
   const [examCode, setExamCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isInProgress, setIsInProgress] = useState(false);
+  const [questionLinks, setQuestionLinks] = useState<string[]>();
+  const [questions, setQuestions] = useState<Question[]>();
 
   useEffect(() => {
     // Reset exam code field
@@ -22,7 +24,13 @@ export default function Home() {
   const handleClick = async () => {
     setIsInProgress(true);
     if (selectedProvider && examCode) {
-      await scrape(selectedProvider, examCode.toLowerCase());
+      const { status, data } = await getQuestionLinks(selectedProvider, examCode);
+      const links = data.links;
+      setQuestionLinks(links);
+      if (status === "success") {
+        const { status, data } = await getQuestions(links);
+        setQuestions(data.questions);
+      }
       setIsInProgress(false);
     }
   };
