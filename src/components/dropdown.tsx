@@ -18,7 +18,10 @@ type DropdownProps = {
   value?: ItemValue;
   onChange?: (value: ItemValue) => any;
   placeholder?: string;
+  disabled?: boolean;
   className?: string;
+  buttonClassName?: string;
+  menuClassName?: string;
 };
 
 const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
@@ -35,7 +38,9 @@ const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
   </li>;
 };
 
-const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder, className }) => {
+const Dropdown: FC<DropdownProps> = ({
+  options, value, onChange, placeholder, disabled, className, buttonClassName, menuClassName
+}) => {
   const [selected, setSelected] = useState<ItemValue>(value);
   const [menuVisible, setMenuVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -44,6 +49,10 @@ const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder, cl
   useEffect(() => {
     if (onChange) onChange(selected);
   }, [selected]);
+
+  useEffect(() => {
+    setMenuVisible(false);
+  }, [disabled])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -58,21 +67,22 @@ const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder, cl
     };
   }, [menuRef, buttonRef]);
 
-  return <div>
+  return <div className={classNames("dropdown", className)}>
     <button
       ref={buttonRef}
-      className="dropdown-button"
+      className={classNames("dropdown-button", buttonClassName)}
       type="button"
       onClick={() => setMenuVisible(prev => !prev)}
+      disabled={disabled}
     >
-      {value ? (options?.find(e => e.value === value)?.label ?? "") : (placeholder ?? "")}
+      <span className="flex-1">{value ? (options?.find(e => e.value === value)?.label ?? "") : (placeholder ?? "")}</span>
       <svg className="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
       </svg>
     </button>
     <div
       ref={menuRef}
-      className={classNames("dropdown-menu", className, {
+      className={classNames("dropdown-menu", menuClassName, {
         hidden: !menuVisible
       })}
     >

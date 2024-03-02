@@ -9,20 +9,26 @@ type InputTextProps = {
   onChange?: ChangeEventHandler<HTMLInputElement>;
   placeholder?: string;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
+  labelClassName?: string;
+  boxClassName?: string;
 };
 
-const InputText: FC<InputTextProps> = ({ id, label, type, value, onChange, placeholder, required, className }) => {
-  return <div>
-    {label && <label htmlFor={id} className="inputtext-label">
+const InputText: FC<InputTextProps> = ({
+  id, label, type, value, onChange, placeholder, required, disabled, className, labelClassName, boxClassName
+}) => {
+  return <div className={classNames(className)}>
+    {label && <label htmlFor={id} className={classNames("inputtext-label", labelClassName)}>
       {label}
     </label>}
     <input
       type={type}
       id={id}
-      className={classNames("inputtext-box", className)}
+      className={classNames("inputtext-box", boxClassName)}
       placeholder={placeholder}
       required={required}
+      disabled={disabled}
       value={value}
       onChange={onChange}
     />
