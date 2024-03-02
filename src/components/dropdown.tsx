@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { Dispatch, FC, SetStateAction, useEffect, useRef, useState } from "react";
 
 type ItemValue = string | number | undefined;
@@ -17,6 +18,7 @@ type DropdownProps = {
   value?: ItemValue;
   onChange?: (value: ItemValue) => any;
   placeholder?: string;
+  className?: string;
 };
 
 const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
@@ -33,7 +35,7 @@ const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
   </li>;
 };
 
-const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder }) => {
+const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder, className }) => {
   const [selected, setSelected] = useState<ItemValue>(value);
   const [menuVisible, setMenuVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -56,10 +58,10 @@ const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder }) 
     };
   }, [menuRef, buttonRef]);
 
-  return <>
+  return <div>
     <button
       ref={buttonRef}
-      className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      className="dropdown-button"
       type="button"
       onClick={() => setMenuVisible(prev => !prev)}
     >
@@ -70,7 +72,9 @@ const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder }) 
     </button>
     <div
       ref={menuRef}
-      className={`z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 ${!menuVisible ? "hidden" : ""}`}
+      className={classNames("dropdown-menu", className, {
+        hidden: !menuVisible
+      })}
     >
       <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
         {options && options.map((e, i) =>
@@ -84,7 +88,7 @@ const Dropdown: FC<DropdownProps> = ({ options, value, onChange, placeholder }) 
         )}
       </ul>
     </div>
-  </>;
+  </div>;
 };
 
 export default Dropdown;
