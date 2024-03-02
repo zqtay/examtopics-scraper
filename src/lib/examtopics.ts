@@ -619,7 +619,7 @@ export const getProviderOptions = async () => {
     const link = e.getElementsByTagName("a")[0];
     return {
       label: link.innerHTML.trim(),
-      value: link.href.match(regex)?.[1] ?? "",
+      value: link.getAttribute('href')?.match(regex)?.[1] ?? "",
     };
   });
   return providers;

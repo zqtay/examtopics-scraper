@@ -11,7 +11,8 @@ export type Question = {
   comments: string[];
 };
 
-const BASE_URL = "api/examtopics/discussions";
+const PROXY_BASE_URL = "/api/examtopics";
+const ORIGIN_BASE_URL = "https://www.examtopics.com";
 const FETCH_BATCH_SIZE = 10;
 
 const getQuestionLinks = async (
@@ -20,7 +21,7 @@ const getQuestionLinks = async (
   // Get last page number first
   let lastPageIndex = end;
   if (!lastPageIndex) {
-    const doc = await fetchPage(`${BASE_URL}/${provider}`);
+    const doc = await fetchPage(`${PROXY_BASE_URL}/discussions/${provider}`);
     lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerHTML.trim());
   }
   if (!start) start = 1;
@@ -38,14 +39,16 @@ const getQuestionLinks = async (
       Array(FETCH_BATCH_SIZE).fill(0).map((e, i) => i + startPageIndexInBatch);
 
     // Fetch pages in batch
-    const promises = indexes.map(e =>
-      fetchPage(`${BASE_URL}/${provider}/${e}`)
+    const promises = indexes.map(index =>
+      fetchPage(`${PROXY_BASE_URL}/discussions/${provider}/${index}`)
         .then(doc => {
-          const links = (Array.from(doc.getElementsByClassName("discussion-link")) as HTMLLinkElement[])
-            .map((e) => e.href)
-            .filter(e => e.includes(exam));
-          console.log(`Parsed page ${e}`);
-          return links;
+          let links = (Array.from(doc.getElementsByClassName("discussion-link")))
+            .map(e => e.getAttribute('href'));
+          links = links.filter(e => {
+            return e !== null && e?.includes(exam)
+          });
+          console.log(`Parsed page ${index}`);
+          return links as string[];
         })
         .catch((error) => console.log(error))
     );
@@ -76,7 +79,7 @@ const getQuestions = async (links: string[]) => {
 
     // Fetch pages in batch
     const promises = batch.map(link =>
-      fetchPage(link)
+      fetchPage(`${PROXY_BASE_URL}${link}`)
         .then(doc => {
           const header = doc.querySelector(".question-discussion-header > div")?.innerHTML.trim();
           const regex = /(\s*)Question #:\s(\d+)(\s*)Topic #:\s(\d+)/;
@@ -102,6 +105,7 @@ const getQuestions = async (links: string[]) => {
             .map(e => e.innerHTML.trim());
           console.log(`Parsed topic ${topicNumber} question ${questionNumber}`);
           return {
+            url: `${ORIGIN_BASE_URL}${link}`,
             topic: topicNumber,
             index: questionNumber,
             body,
