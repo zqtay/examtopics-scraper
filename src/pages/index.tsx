@@ -6,55 +6,47 @@ import { fetchPage } from "@/lib/fetcher";
 import Dropdown from "@/components/dropdown";
 import Spinner from "@/components/spinner";
 import InputText from "@/components/inputtext";
+import { providerOptions } from "@/lib/examtopics";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const regex = /discussions\/(.*?)((\/|$))/;
+
 
 export default function Home() {
-  const [providers, setProviders] = useState<{ label: string; value: string; }[]>();
   const [selectedProvider, setSelectedProvider] = useState<string>();
   const [examCode, setExamCode] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchPage("/api/examtopics/discussions")
-      .then(doc => {
-        const list = Array.from(doc.getElementsByClassName("dicussion-title-container"));
-        const providers = list.map(e => {
-          const link = e.getElementsByTagName("a")[0];
-          return {
-            label: link.innerHTML.trim(),
-            value: link.href.match(regex)?.[1] ?? "",
-          };
-        });
-        setProviders(providers);
-        setIsLoading(false);
-      });
+
   }, []);
 
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`flex min-h-screen flex-col items-center justify-center p-24 ${inter.className}`}
     >
       {isLoading && <Spinner />}
-      <Dropdown
-        value={selectedProvider}
-        options={providers}
-        placeholder={"Select exam provider"}
-        onChange={value => setSelectedProvider(value as string)}
-      />
-      {selectedProvider}
-      <InputText
-        value={examCode}
-        onChange={e => setExamCode(e.target.value)}
-        placeholder="Exam code"
-      />
+      <div className="flex gap-4">
+        <Dropdown
+          className="overflow-y-auto max-h-72"
+          value={selectedProvider}
+          options={providerOptions}
+          placeholder={"Select exam provider"}
+          onChange={value => setSelectedProvider(value as string)}
+        />
+        <InputText
+          className={"text-center"}
+          value={examCode}
+          onChange={e => setExamCode(e.target.value)}
+          placeholder="Exam code"
+        />
+      </div>
       <button
-        className="p-2 rounded border"
+        className="button-default"
+        disabled={!selectedProvider && !examCode}
         onClick={() => {
-          if (selectedProvider)
-            scrape(selectedProvider, examCode);
+          if (selectedProvider && examCode)
+            scrape(selectedProvider, examCode.toLowerCase());
         }}
       >
         Start
