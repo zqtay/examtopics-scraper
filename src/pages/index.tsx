@@ -1,5 +1,5 @@
 import { Inter } from "next/font/google";
-import { Question, getQuestionLinks, getQuestions } from "@/lib/scraper";
+import { Question, ScraperState, getQuestionLinks, getQuestions } from "@/lib/scraper";
 import { useContext, useEffect, useState } from "react";
 import Dropdown from "@/components/ui/dropdown";
 import Spinner from "@/components/ui/spinner";
@@ -11,19 +11,8 @@ import { saveAs } from 'file-saver';
 
 const inter = Inter({ subsets: ["latin"] });
 
-type ScraperState = {
-  provider?: string;
-  examCode?: string;
-  isInProgress?: boolean;
-  lastDiscussionListPageIndex?: number;
-  lastQuestionLinkIndex?: number;
-  questionLinks?: string[];
-  questions?: Question[];
-};
-
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [state, setState] = useState<ScraperState>({provider: "", examCode: ""});
+  const [state, setState] = useState<ScraperState>({ provider: "", examCode: "" });
   const { settings } = useContext(SettingsContext);
 
   useEffect(() => {
@@ -94,7 +83,7 @@ export default function Home() {
   };
 
   const handleExport = async () => {
-    const blob = new Blob([JSON.stringify(state?.questions)], {type: "text/plain;charset=utf-8"});
+    const blob = new Blob([JSON.stringify(state?.questions)], { type: "text/plain;charset=utf-8" });
     saveAs(
       blob,
       `${state?.provider}-${state.examCode}-${state?.questions?.length}.json`
@@ -106,45 +95,40 @@ export default function Home() {
   const isCompleted = state?.questionLinks && state?.questions && state?.questionLinks?.length === state?.questions?.length;
 
   return (
-    <main
-      className={`container px-2 mx-auto h-screen`}
-    >
-      {isLoading && <Spinner />}
-      <div className="h-full max-w-[32rem] mx-auto flex flex-col justify-center">
-        <div className="text-2xl font-semibold mb-10 text-center">ExamTopics Scraper</div>
-        <div className="flex flex-wrap gap-4 justify-center items-center">
-          <Dropdown
-            className="flex-1 min-w-60"
-            buttonClassName="w-full"
-            menuClassName="overflow-y-auto max-h-72"
-            value={state?.provider}
-            onChange={value => setState(prev => ({ ...prev, provider: value as string }))}
-            options={providerOptions}
-            placeholder="Select exam provider"
-            disabled={state?.isInProgress}
-          />
-          <InputText
-            className="flex-1 min-w-60"
-            boxClassName="text-center"
-            value={state?.examCode}
-            onChange={e => setState(prev => ({ ...prev, examCode: e.target.value }))}
-            placeholder="Exam code"
-            disabled={state?.isInProgress}
-          />
-        </div>
-        <button
-          className="button-default w-full mt-4"
-          disabled={isInputDisabled}
-          onClick={handleClick}
-        >
-          {state?.isInProgress ? "Scraping ... " :
-            isInterrupted ? "Resume" :
-              isCompleted ? "Export" : "Start"
-          }
-        </button>
-        <hr className="my-6" />
-        <Settings />
+    <div className="h-full max-w-[32rem] mx-auto flex flex-col justify-center">
+      <div className="text-2xl font-semibold mb-10 text-center">ExamTopics Scraper</div>
+      <div className="flex flex-wrap gap-4 justify-center items-center">
+        <Dropdown
+          className="flex-1 min-w-60"
+          buttonClassName="w-full"
+          menuClassName="overflow-y-auto max-h-72"
+          value={state?.provider}
+          onChange={value => setState(prev => ({ ...prev, provider: value as string }))}
+          options={providerOptions}
+          placeholder="Select exam provider"
+          disabled={state?.isInProgress}
+        />
+        <InputText
+          className="flex-1 min-w-60"
+          boxClassName="text-center"
+          value={state?.examCode}
+          onChange={e => setState(prev => ({ ...prev, examCode: e.target.value }))}
+          placeholder="Exam code"
+          disabled={state?.isInProgress}
+        />
       </div>
-    </main>
+      <button
+        className="button-default w-full mt-4"
+        disabled={isInputDisabled}
+        onClick={handleClick}
+      >
+        {state?.isInProgress ? "Scraping ... " :
+          isInterrupted ? "Resume" :
+            isCompleted ? "Export" : "Start"
+        }
+      </button>
+      <hr className="my-6" />
+      <Settings />
+    </div>
   );
 }

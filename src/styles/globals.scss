@@ -54,4 +54,24 @@
   }
 }
 
+.fileinput-label {
+  @apply block mb-2 text-sm font-medium text-gray-900 dark:text-white;
+}
+
+.fileinput-box {
+  @apply text-gray-900 border border-gray-300 bg-gray-50;
+  @apply dark:text-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400;
+  @apply block w-full text-sm rounded-lg cursor-pointer focus:outline-none;
+}
+
+.dropzone-label {
+  @apply flex flex-col items-center justify-center pt-5 pb-6;
+}
+
+.dropzone-box {
+  @apply flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer w-full;
+  @apply border-gray-300 bg-gray-50 hover:bg-gray-100;
+  @apply dark:hover:bg-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600;
+}
+
 @tailwind utilities;

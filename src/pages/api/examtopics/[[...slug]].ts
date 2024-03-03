@@ -16,9 +16,7 @@ export default async function handler(
   if (req.method !== "GET") {
     return res.status(405).setHeader("Allow", "GET");
   }
-  console.log(match)
   const fwdRes = await fetch(`${EXAMTOPICS_BASE_URL}/${match[1]}`);
-  // Set status: 200 or 206
   res.status(fwdRes.status);
   // Pipe the readable stream to this API response
   if (fwdRes.body) {

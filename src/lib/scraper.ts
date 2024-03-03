@@ -4,11 +4,16 @@ import { sleep } from "./utils";
 export type Question = {
   topic: string | undefined;
   index: string | undefined;
+  url: string | undefined;
   body: string | undefined;
   answer: string;
   answerDescription: string;
   options: string[] | undefined;
-  votes: string | undefined;
+  votes: {
+    answer: string;
+    count: number;
+    is_most_voted: boolean;
+  }[] | undefined;
   comments: string[];
 };
 
@@ -26,6 +31,16 @@ export type GetQuestionsResponse = {
     lastIndex?: number;
     questions: Question[];
   },
+};
+
+export type ScraperState = {
+  provider?: string;
+  examCode?: string;
+  isInProgress?: boolean;
+  lastDiscussionListPageIndex?: number;
+  lastQuestionLinkIndex?: number;
+  questionLinks?: string[];
+  questions?: Question[];
 };
 
 const PROXY_BASE_URL = "/api/examtopics";
@@ -133,7 +148,7 @@ export const getQuestions = async (
             );
           const answer = doc.getElementsByClassName("correct-answer")[0]?.innerHTML.trim();
           const answerDescription = doc.getElementsByClassName("answer-description")[0]?.innerHTML.trim();
-          let votes = doc.querySelector(".voted-answers-tally script")?.innerHTML.trim();
+          let votes = doc.querySelector(".voted-answers-tally script")?.innerHTML.trim() ?? undefined;
           if (votes) {
             votes = JSON.parse(votes).map((e: any) => ({
               answer: e.voted_answers,
@@ -152,7 +167,7 @@ export const getQuestions = async (
             answer,
             answerDescription,
             options: options.length === 0 ? undefined : options,
-            votes,
+            votes: votes as Question["votes"],
             comments
           };
         })
