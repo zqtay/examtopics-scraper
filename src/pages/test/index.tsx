@@ -32,17 +32,14 @@ const Test = () => {
 
   return (
     <div className="h-full max-w-[32rem] mx-auto flex flex-col justify-center">
-      <div className="text-2xl font-semibold mb-10 text-center">ExamTopics Scraper</div>
-      <div className="flex flex-wrap gap-4 justify-center items-center">
-        <Dropzone
-          className="w-full"
-          label="Import questions data"
-          helperText="JSON"
-          icon={<FaFileUpload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />}
-          accept=".json"
-          onChange={handleReadFile}
-        />
-      </div>
+      <Dropzone
+        className="w-full mb-6"
+        label="Import questions data"
+        helperText="JSON"
+        icon={<FaFileUpload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />}
+        accept=".json"
+        onChange={handleReadFile}
+      />
       {currentQuestion && <QuestionPage {...currentQuestion} />}
       <button
         className="button-default"

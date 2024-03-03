@@ -27,10 +27,10 @@ const Dropzone: FC<DropzoneProps> = ({
     >
       <div className={classNames("dropzone-label", labelClassName)}>
         {icon}
-        {label && <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+        {label && <p className="mb-2 text-sm">
           {label}
         </p>}
-        {helperText && <p className="text-xs text-gray-500 dark:text-gray-400">
+        {helperText && <p className="text-xs">
           {helperText}
         </p>}
       </div>
