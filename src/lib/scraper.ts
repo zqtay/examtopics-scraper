@@ -1,4 +1,5 @@
 import { fetchPage } from "./fetcher";
+import { sleep } from "./utils";
 
 export type Question = {
   topic: string | undefined;
@@ -29,10 +30,14 @@ export type GetQuestionsResponse = {
 
 const PROXY_BASE_URL = "/api/examtopics";
 const ORIGIN_BASE_URL = "https://www.examtopics.com";
-const FETCH_BATCH_SIZE = 10;
 
 export const getQuestionLinks = async (
-  provider: string, exam: string, start?: number, end?: number
+  provider: string,
+  exam: string,
+  start: number = 1,
+  end: number | undefined,
+  batchSize: number,
+  sleepDuration: number,
 ): Promise<GetQuestionLinksResponse> => {
   // Get last page number first
   let lastPageIndex = end;
@@ -40,19 +45,18 @@ export const getQuestionLinks = async (
     const doc = await fetchPage(`${PROXY_BASE_URL}/discussions/${provider}`);
     lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerHTML.trim());
   }
-  if (!start) start = 1;
 
   console.log(`Parsing from discussion page ${start} to ${lastPageIndex}`);
 
   let results: string[] = [];
-  const lastBatchIndex = Math.ceil((lastPageIndex - start) / FETCH_BATCH_SIZE) - 1;
+  const lastBatchIndex = Math.ceil((lastPageIndex - start) / batchSize) - 1;
 
   for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
-    const startPageIndexInBatch = (batchIndex * FETCH_BATCH_SIZE) + start;
+    const startPageIndexInBatch = (batchIndex * batchSize) + start;
     // Get array of page index
     const indexes = batchIndex === lastBatchIndex ?
       Array(lastPageIndex - startPageIndexInBatch + 1).fill(0).map((e, i) => i + startPageIndexInBatch) :
-      Array(FETCH_BATCH_SIZE).fill(0).map((e, i) => i + startPageIndexInBatch);
+      Array(batchSize).fill(0).map((e, i) => i + startPageIndexInBatch);
 
     // Fetch pages in batch
     const promises = indexes.map(index =>
@@ -84,9 +88,13 @@ export const getQuestionLinks = async (
     }
     console.log(`Parsed ${batchIndex === lastBatchIndex ?
       (lastPageIndex - start + 1) :
-      (batchIndex + 1) * FETCH_BATCH_SIZE
+      (batchIndex + 1) * batchSize
       } pages`);
     console.log(`Collated ${results.length} question links`);
+    // Delay before next batch
+    if (sleepDuration > 0) {
+      sleep(sleepDuration);
+    }
   }
   return {
     status: "success",
@@ -96,16 +104,20 @@ export const getQuestionLinks = async (
   };
 };
 
-export const getQuestions = async (links: string[]): Promise<GetQuestionsResponse> => {
+export const getQuestions = async (
+  links: string[],
+  batchSize: number,
+  sleepDuration: number,
+): Promise<GetQuestionsResponse> => {
   let results: Question[] = [];
   const lastPageIndex = links.length;
-  const lastBatchIndex = Math.ceil(lastPageIndex / FETCH_BATCH_SIZE) - 1;
+  const lastBatchIndex = Math.ceil(lastPageIndex / batchSize) - 1;
 
   for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
-    const startIndexInBatch = batchIndex * FETCH_BATCH_SIZE;
+    const startIndexInBatch = batchIndex * batchSize;
     const lastIndexInBatch = batchIndex === lastBatchIndex ?
       lastPageIndex :
-      startIndexInBatch + FETCH_BATCH_SIZE - 1;
+      startIndexInBatch + batchSize - 1;
     const batch = links.slice(startIndexInBatch, lastIndexInBatch + 1);
 
     // Fetch pages in batch
@@ -161,6 +173,10 @@ export const getQuestions = async (links: string[]): Promise<GetQuestionsRespons
       };
     }
     console.log(`Parsed ${results.length} questions`);
+    // Delay before next batch
+    if (sleepDuration > 0) {
+      sleep(sleepDuration);
+    }
   }
 
   return {
