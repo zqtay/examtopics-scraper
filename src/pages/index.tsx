@@ -7,6 +7,7 @@ import InputText from "@/components/ui/inputtext";
 import { providerOptions } from "@/lib/examtopics";
 import { SettingsContext } from "@/context/settings";
 import Settings from "@/components/scraper/settings";
+import { saveAs } from 'file-saver';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,7 +23,7 @@ type ScraperState = {
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  const [state, setState] = useState<ScraperState>({});
+  const [state, setState] = useState<ScraperState>({provider: "", examCode: ""});
   const { settings } = useContext(SettingsContext);
 
   useEffect(() => {
@@ -43,7 +44,12 @@ export default function Home() {
 
   const handleClick = async () => {
     setIsInProgress(true);
-    await handleScrape();
+    if (isCompleted) {
+      await handleExport();
+    }
+    else {
+      await handleScrape();
+    }
     setIsInProgress(false);
   };
 
@@ -74,7 +80,7 @@ export default function Home() {
     }
     // More questions not parsed
     if (links.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
-      res =  await getQuestions(
+      res = await getQuestions(
         links,
         settings.questions.batchSize,
         settings.questions.sleepDuration
@@ -87,8 +93,17 @@ export default function Home() {
     }
   };
 
+  const handleExport = async () => {
+    const blob = new Blob([JSON.stringify(state?.questions)], {type: "text/plain;charset=utf-8"});
+    saveAs(
+      blob,
+      `${state?.provider}-${state.examCode}-${state?.questions?.length}.json`
+    );
+  };
+
   const isInputDisabled = !state?.provider || !state?.examCode || state.isInProgress;
-  const isScrapingInterrupted = state?.lastDiscussionListPageIndex !== undefined || (state?.lastQuestionLinkIndex !== undefined && state?.questionLinks);
+  const isInterrupted = state?.lastDiscussionListPageIndex !== undefined || (state?.lastQuestionLinkIndex !== undefined && state?.questionLinks);
+  const isCompleted = state?.questionLinks && state?.questions && state?.questionLinks?.length === state?.questions?.length;
 
   return (
     <main
@@ -122,9 +137,12 @@ export default function Home() {
           disabled={isInputDisabled}
           onClick={handleClick}
         >
-          {state?.isInProgress ? "Scraping ... " : isScrapingInterrupted ? "Resume" : "Start"}
+          {state?.isInProgress ? "Scraping ... " :
+            isInterrupted ? "Resume" :
+              isCompleted ? "Export" : "Start"
+          }
         </button>
-        <hr className="my-6"/>
+        <hr className="my-6" />
         <Settings />
       </div>
     </main>
