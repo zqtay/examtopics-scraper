@@ -1,14 +1,30 @@
 import { fetchPage } from "./fetcher";
 
 export type Question = {
-  topic: string | null;
-  index: string | null;
+  topic: string | undefined;
+  index: string | undefined;
   body: string | undefined;
   answer: string;
-  answer_description: string;
-  options: string[];
+  answerDescription: string;
+  options: string[] | undefined;
   votes: string | undefined;
   comments: string[];
+};
+
+export type GetQuestionLinksResponse = {
+  status: "success" | "error";
+  data: {
+    lastIndex?: number;
+    links: string[];
+  },
+};
+
+export type GetQuestionsResponse = {
+  status: "success" | "error";
+  data: {
+    lastIndex?: number;
+    questions: Question[];
+  },
 };
 
 const PROXY_BASE_URL = "/api/examtopics";
@@ -17,7 +33,7 @@ const FETCH_BATCH_SIZE = 10;
 
 export const getQuestionLinks = async (
   provider: string, exam: string, start?: number, end?: number
-) => {
+): Promise<GetQuestionLinksResponse> => {
   // Get last page number first
   let lastPageIndex = end;
   if (!lastPageIndex) {
@@ -80,7 +96,7 @@ export const getQuestionLinks = async (
   };
 };
 
-export const getQuestions = async (links: string[]) => {
+export const getQuestions = async (links: string[]): Promise<GetQuestionsResponse> => {
   let results: Question[] = [];
   const lastPageIndex = links.length;
   const lastBatchIndex = Math.ceil(lastPageIndex / FETCH_BATCH_SIZE) - 1;
@@ -96,16 +112,15 @@ export const getQuestions = async (links: string[]) => {
     const promises = batch.map(link =>
       fetchPage(`${PROXY_BASE_URL}${link}`)
         .then(doc => {
-          const match = link?.match(/topic-(\d+)-question-(\d+)/);
-          const topicNumber = match ? match[1] : null;
-          const questionNumber = match ? match[2] : null;
+          const [, topicNumber] = link?.match(/topic-(\d+)/) ?? [];
+          const [, questionNumber] = link?.match(/question-(\d+)/) ?? [];
           const body = doc.querySelector(".question-body > .card-text")?.innerHTML.trim();
           const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
-            .map(e => e.innerHTML.trim()
-              .replaceAll('\t', "")
-              .replaceAll('\n', ""));
+            .map((e: Element) =>
+              e.textContent?.trim().replaceAll('\t', "").replaceAll('\n', "") ?? ""
+            );
           const answer = doc.getElementsByClassName("correct-answer")[0]?.innerHTML.trim();
-          const answer_description = doc.getElementsByClassName("answer-description")[0]?.innerHTML.trim();
+          const answerDescription = doc.getElementsByClassName("answer-description")[0]?.innerHTML.trim();
           let votes = doc.querySelector(".voted-answers-tally script")?.innerHTML.trim();
           if (votes) {
             votes = JSON.parse(votes).map((e: any) => ({
@@ -123,13 +138,12 @@ export const getQuestions = async (links: string[]) => {
             index: questionNumber,
             body,
             answer,
-            answer_description,
-            options,
+            answerDescription,
+            options: options.length === 0 ? undefined : options,
             votes,
             comments
           };
         })
-        .catch((error) => console.log(error))
     );
     // Concat the results
     try {
@@ -142,7 +156,7 @@ export const getQuestions = async (links: string[]) => {
         status: "error",
         data: {
           lastIndex: startIndexInBatch,
-          links: results,
+          questions: results,
         },
       };
     }

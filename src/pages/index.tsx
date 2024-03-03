@@ -8,32 +8,73 @@ import { providerOptions } from "@/lib/examtopics";
 
 const inter = Inter({ subsets: ["latin"] });
 
+type ScraperState = {
+  provider?: string;
+  examCode?: string;
+  isInProgress?: boolean;
+  lastDiscussionListPageIndex?: number;
+  lastQuestionLinkIndex?: number;
+  questionLinks?: string[];
+  questions?: Question[];
+};
+
 export default function Home() {
-  const [selectedProvider, setSelectedProvider] = useState<string>();
-  const [examCode, setExamCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isInProgress, setIsInProgress] = useState(false);
-  const [questionLinks, setQuestionLinks] = useState<string[]>();
-  const [questions, setQuestions] = useState<Question[]>();
+  const [state, setState] = useState<ScraperState>({});
 
   useEffect(() => {
-    // Reset exam code field
-    setExamCode("");
-  }, [selectedProvider]);
+    // Reset fields
+    setState(prev => ({
+      ...prev,
+      examCode: "",
+      lastDiscussionListPageIndex: undefined,
+      lastQuestionLinkIndex: undefined,
+      questionLinks: undefined,
+      questions: undefined,
+    }));
+  }, [state?.provider]);
+
+  const setIsInProgress = (value: boolean) => {
+    setState(prev => ({...prev, isInProgress: value}));
+  };
 
   const handleClick = async () => {
     setIsInProgress(true);
-    if (selectedProvider && examCode) {
-      const { status, data } = await getQuestionLinks(selectedProvider, examCode);
-      const links = data.links;
-      setQuestionLinks(links);
-      if (status === "success") {
-        const { status, data } = await getQuestions(links);
-        setQuestions(data.questions);
-      }
-      setIsInProgress(false);
-    }
+    await handleScrape();
+    setIsInProgress(false);
   };
+
+  const handleScrape = async () => {
+    if (!state?.provider || !state?.examCode) return;
+    let links: string[];
+    let res: any;
+    // No question links
+    if (state?.lastQuestionLinkIndex === undefined || !state.questionLinks) {
+      res = await getQuestionLinks(state.provider, state.examCode, state.lastDiscussionListPageIndex ?? 1);
+      links = res.data.links;
+      setState(prev => ({...prev, questionLinks: [...(prev?.questionLinks ?? []), ...links]}));
+      if (res.status !== "success") {
+        setState(prev => ({...prev, lastDiscussionListPageIndex: res.data.lastIndex}));
+        return;
+      }
+    }
+    // Failed getting questions previously, resume from last index
+    else {
+      links = state?.questionLinks.slice(state?.lastQuestionLinkIndex);
+    }
+    // More questions not parsed
+    if (links.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
+      res = await getQuestions(links);
+      setState(prev => ({...prev, questions: res.data.questions}));
+      if (res.status !== "success") {
+        setState(prev => ({...prev, lastQuestionLinkIndex: res.data.lastIndex}));
+        return;
+      }
+    }
+  }
+
+  const isInputDisabled = !state?.provider || !state?.examCode || state.isInProgress;
+  const isScrapingInterrupted = state?.lastDiscussionListPageIndex !== undefined || (state?.lastQuestionLinkIndex !== undefined && state?.questionLinks);
 
   return (
     <main
@@ -46,27 +87,27 @@ export default function Home() {
             className="flex-1 min-w-60"
             buttonClassName="w-full"
             menuClassName="overflow-y-auto max-h-72"
+            value={state?.provider}
+            onChange={value => setState(prev => ({...prev, provider: value as string}))}
             options={providerOptions}
             placeholder="Select exam provider"
-            disabled={isInProgress}
-            value={selectedProvider}
-            onChange={value => setSelectedProvider(value as string)}
+            disabled={state?.isInProgress}
           />
           <InputText
             className="flex-1 min-w-60"
             boxClassName="text-center"
-            value={examCode}
-            onChange={e => setExamCode(e.target.value)}
+            value={state?.examCode}
+            onChange={e => setState(prev => ({...prev, examCode: e.target.value}))}
             placeholder="Exam code"
-            disabled={isInProgress}
+            disabled={state?.isInProgress}
           />
         </div>
         <button
           className="button-default w-full mt-4"
-          disabled={!selectedProvider || !examCode || isInProgress}
+          disabled={isInputDisabled}
           onClick={handleClick}
         >
-          {isInProgress ? "Scraping ... " : "Start"}
+          {state?.isInProgress ? "Scraping ... " : isScrapingInterrupted ? "Resume" : "Start"}
         </button>
       </div>
     </main>
