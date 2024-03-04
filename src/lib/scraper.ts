@@ -12,7 +12,7 @@ export type Question = {
   votes: {
     answer: string;
     count: number;
-    is_most_voted: boolean;
+    isMostVoted: boolean;
   }[] | undefined;
   comments: string[];
 };
@@ -64,17 +64,14 @@ export const getQuestionLinks = async (
   console.log(`Parsing from discussion page ${start} to ${lastPageIndex}`);
 
   let results: string[] = [];
-  const lastBatchIndex = Math.ceil((lastPageIndex - start) / batchSize) - 1;
 
-  for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
-    const startPageIndexInBatch = (batchIndex * batchSize) + start;
-    // Get array of page index
-    const indexes = batchIndex === lastBatchIndex ?
-      Array(lastPageIndex - startPageIndexInBatch + 1).fill(0).map((e, i) => i + startPageIndexInBatch) :
-      Array(batchSize).fill(0).map((e, i) => i + startPageIndexInBatch);
-
+  let pageIndex = start;
+  while (pageIndex <= lastPageIndex) {
+    const currentBatchSize = pageIndex + batchSize - 1 > lastPageIndex ?
+      (lastPageIndex - pageIndex + 1) : batchSize;
+    const batch = Array(currentBatchSize).fill(0).map((e, i) => i + pageIndex);
     // Fetch pages in batch
-    const promises = indexes.map(index =>
+    const promises = batch.map(index =>
       fetchPage(`${PROXY_BASE_URL}/discussions/${provider}/${index}`)
         .then(doc => {
           let links = (Array.from(doc.getElementsByClassName("discussion-link")))
@@ -96,21 +93,21 @@ export const getQuestionLinks = async (
       return {
         status: "error",
         data: {
-          lastIndex: startPageIndexInBatch,
+          lastIndex: pageIndex,
           links: results,
         },
       };
     }
-    console.log(`Parsed ${batchIndex === lastBatchIndex ?
-      (lastPageIndex - start + 1) :
-      (batchIndex + 1) * batchSize
-      } pages`);
+    console.log(`Parsed ${pageIndex + currentBatchSize - start} pages`);
     console.log(`Collated ${results.length} question links`);
     // Delay before next batch
     if (sleepDuration > 0) {
       sleep(sleepDuration);
     }
+    // Next batch start index
+    pageIndex = pageIndex + batchSize;
   }
+
   return {
     status: "success",
     data: {
@@ -121,20 +118,17 @@ export const getQuestionLinks = async (
 
 export const getQuestions = async (
   links: string[],
+  start: number = 0,
+  end: number | undefined,
   batchSize: number,
   sleepDuration: number,
 ): Promise<GetQuestionsResponse> => {
   let results: Question[] = [];
-  const lastPageIndex = links.length;
-  const lastBatchIndex = Math.ceil(lastPageIndex / batchSize) - 1;
+  const lastPageIndex = end ?? links.length - 1;
+  let pageIndex = start;
 
-  for (let batchIndex = 0; batchIndex <= lastBatchIndex; batchIndex++) {
-    const startIndexInBatch = batchIndex * batchSize;
-    const lastIndexInBatch = batchIndex === lastBatchIndex ?
-      lastPageIndex :
-      startIndexInBatch + batchSize - 1;
-    const batch = links.slice(startIndexInBatch, lastIndexInBatch + 1);
-
+  while (pageIndex <= lastPageIndex) {
+    const batch = links.slice(pageIndex, pageIndex + batchSize);
     // Fetch pages in batch
     const promises = batch.map(link =>
       fetchPage(`${PROXY_BASE_URL}${link}`)
@@ -153,7 +147,7 @@ export const getQuestions = async (
             votes = JSON.parse(votes).map((e: any) => ({
               answer: e.voted_answers,
               count: e.vote_count,
-              is_most_voted: e.is_most_voted
+              isMostVoted: e.is_most_voted
             }));
           }
           const comments = Array.from(doc.getElementsByClassName("comment-content"))
@@ -182,7 +176,7 @@ export const getQuestions = async (
       return {
         status: "error",
         data: {
-          lastIndex: startIndexInBatch,
+          lastIndex: pageIndex,
           questions: results,
         },
       };
@@ -192,6 +186,8 @@ export const getQuestions = async (
     if (sleepDuration > 0) {
       sleep(sleepDuration);
     }
+    // Next batch start index
+    pageIndex = pageIndex + batchSize;
   }
 
   return {

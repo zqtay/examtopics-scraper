@@ -44,8 +44,8 @@ export default function Home() {
     // No question links
     if (state?.lastQuestionLinkIndex === undefined || !state.questionLinks) {
       res = await getQuestionLinks(
-        state.provider,
-        state.examCode,
+        state.provider.toLowerCase(),
+        state.examCode.toLowerCase(),
         state.lastDiscussionListPageIndex ?? 1,
         undefined,
         settings.questionLinks.batchSize,
@@ -53,24 +53,30 @@ export default function Home() {
       );
       links = res.data.links;
       setState(prev => ({ ...prev, questionLinks: [...(prev?.questionLinks ?? []), ...links] }));
-      if (res.status !== "success") {
+      if (res.status === "success") {
+        setState(prev => ({ ...prev, lastDiscussionListPageIndex: undefined }));
+      } else {
         setState(prev => ({ ...prev, lastDiscussionListPageIndex: res.data.lastIndex }));
         return;
       }
     }
     // Failed getting questions previously, resume from last index
     else {
-      links = state?.questionLinks.slice(state?.lastQuestionLinkIndex);
+      links = state?.questionLinks;
     }
     // More questions not parsed
     if (links.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
       res = await getQuestions(
         links,
+        state?.lastQuestionLinkIndex,
+        undefined,
         settings.questions.batchSize,
         settings.questions.sleepDuration
       );
       setState(prev => ({ ...prev, questions: [...(prev?.questions ?? []), ...res.data.questions] }));
-      if (res.status !== "success") {
+      if (res.status === "success") {
+        setState(prev => ({ ...prev, lastQuestionLinkIndex: undefined }));
+      } else {
         setState(prev => ({ ...prev, lastQuestionLinkIndex: res.data.lastIndex }));
         return;
       }
