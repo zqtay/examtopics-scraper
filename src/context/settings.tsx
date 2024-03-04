@@ -15,7 +15,7 @@ export type ScraperSettings = {
 
 export type SettingsContextProps = {
   settings: ScraperSettings,
-  setSettings: Dispatch<SetStateAction<ScraperSettings>>
+  saveSettings: (value: ScraperSettings) => void;
 }
 
 export const SettingsProvider = ({ children }: PropsWithChildren) => {
@@ -29,6 +29,11 @@ export const SettingsProvider = ({ children }: PropsWithChildren) => {
       sleepDuration: 0,
     }
   });
+
+  const saveSettings = (value: ScraperSettings) => {
+    localStorage.setItem("settings", JSON.stringify(value)),
+    setSettings(value);
+  };
 
   useEffect(() => {
     const storedValue = localStorage.getItem("settings");
@@ -44,7 +49,7 @@ export const SettingsProvider = ({ children }: PropsWithChildren) => {
 
   const value = {
     settings,
-    setSettings
+    saveSettings
   };
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
