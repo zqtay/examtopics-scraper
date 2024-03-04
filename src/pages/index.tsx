@@ -31,14 +31,9 @@ export default function Home() {
     setState(prev => ({ ...prev, isInProgress: value }));
   };
 
-  const handleClick = async () => {
+  const handleStartScrape = async () => {
     setIsInProgress(true);
-    if (isCompleted) {
-      await handleExport();
-    }
-    else {
-      await handleScrape();
-    }
+    await handleScrape();
     setIsInProgress(false);
   };
 
@@ -74,7 +69,7 @@ export default function Home() {
         settings.questions.batchSize,
         settings.questions.sleepDuration
       );
-      setState(prev => ({ ...prev, questions: res.data.questions }));
+      setState(prev => ({ ...prev, questions: [...(prev?.questions ?? []), ...res.data.questions] }));
       if (res.status !== "success") {
         setState(prev => ({ ...prev, lastQuestionLinkIndex: res.data.lastIndex }));
         return;
@@ -83,16 +78,21 @@ export default function Home() {
   };
 
   const handleExport = async () => {
-    const blob = new Blob([JSON.stringify(state?.questions)], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([JSON.stringify(state)], { type: "text/plain;charset=utf-8" });
     saveAs(
       blob,
       `${state?.provider}-${state.examCode}-${state?.questions?.length}.json`
     );
   };
 
+  // Input not provided or scraping in progress
   const isInputDisabled = !state?.provider || !state?.examCode || state.isInProgress;
-  const isInterrupted = state?.lastDiscussionListPageIndex !== undefined || (state?.lastQuestionLinkIndex !== undefined && state?.questionLinks);
-  const isCompleted = state?.questionLinks && state?.questions && state?.questionLinks?.length === state?.questions?.length;
+  // Error happened during scraping, last page index was saved
+  const isInterrupted = state?.lastDiscussionListPageIndex !== undefined ||
+    (state?.lastQuestionLinkIndex !== undefined && Boolean(state?.questionLinks));
+  // All questions are parsed
+  const isCompleted = state?.questionLinks && state?.questions &&
+    state?.questionLinks?.length === state?.questions?.length;
 
   return (
     <div className="max-w-[32rem] mx-auto flex flex-col justify-center">
@@ -113,19 +113,29 @@ export default function Home() {
           value={state?.examCode}
           onChange={e => setState(prev => ({ ...prev, examCode: e.target.value }))}
           placeholder="Exam code"
-          disabled={state?.isInProgress}
+          disabled={state?.isInProgress || isInterrupted}
         />
       </div>
-      <button
-        className="button-default w-full mt-4"
-        disabled={isInputDisabled}
-        onClick={handleClick}
-      >
-        {state?.isInProgress ? "Scraping ... " :
-          isInterrupted ? "Resume" :
-            isCompleted ? "Export" : "Start"
-        }
-      </button>
+      {!isCompleted &&
+        <button
+          className="button-default w-full mt-4"
+          disabled={isInputDisabled}
+          onClick={handleStartScrape}
+        >
+          {state?.isInProgress ? "Scraping ... " :
+            isInterrupted ? "Resume" : "Start"
+          }
+        </button>
+      }
+      {(isInterrupted || isCompleted) &&
+        <button
+          className="button-default w-full mt-4"
+          disabled={isInputDisabled}
+          onClick={handleExport}
+        >
+          Export
+        </button>
+      }
       <hr className="my-6" />
       <Settings />
     </div>
