@@ -8,7 +8,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
       </a>
     </header>
     <main
-      className="container px-2 py-6 mx-auto"
+      className="container px-2 py-4 mx-auto"
     >
       {children}
     </main>

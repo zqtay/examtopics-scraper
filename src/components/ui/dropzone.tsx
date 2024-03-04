@@ -27,12 +27,12 @@ const Dropzone: FC<DropzoneProps> = ({
     >
       <div className={classNames("dropzone-label", labelClassName)}>
         {icon}
-        {label && <p className="mb-2 text-sm">
+        {label && <span className="text-sm">
           {label}
-        </p>}
-        {helperText && <p className="text-xs">
+        </span>}
+        {helperText && <span className="mt-2 text-xs">
           {helperText}
-        </p>}
+        </span>}
       </div>
       <input
         id={id}

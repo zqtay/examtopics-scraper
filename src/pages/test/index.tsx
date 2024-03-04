@@ -1,11 +1,12 @@
-import { Question } from "@/lib/scraper";
+import { Question, ScraperState } from "@/lib/scraper";
 import { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
 import { FaFileUpload } from "react-icons/fa";
+import classNames from "classnames";
 
 const Test = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [questions, setQuestions] = useState<Question[]>();
+  const [state, setState] = useState<ScraperState>();
   const [currentQuestion, setCurrentQuestion] = useState<Question>();
 
   const handleReadFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -15,7 +16,7 @@ const Test = () => {
       const text = (e.target?.result);
       if (typeof text === "string") {
         const data = JSON.parse(text);
-        setQuestions(data);
+        setState(data);
       }
     };
     const file = e.target.files?.[0];
@@ -25,28 +26,48 @@ const Test = () => {
   };
 
   const handleNextQuestion = () => {
-    if (!questions) return;
-    const index = Math.floor(Math.random() * questions?.length);
-    setCurrentQuestion(questions[index]);
+    if (!state?.questions) return;
+    const index = Math.floor(Math.random() * state?.questions?.length);
+    setCurrentQuestion(state?.questions[index]);
   };
 
+  const isLoaded = state?.provider && state?.examCode && state?.questions;
+
+  useEffect(() => {
+    // Reset current question
+    setCurrentQuestion(undefined);
+  }, [state]);
+
   return (
-    <div className="h-full max-w-[32rem] mx-auto flex flex-col justify-center">
+    <div className="h-full max-w-[48rem] mx-auto flex flex-col justify-center">
       <Dropzone
-        className="w-full mb-6"
-        label="Import questions data"
-        helperText="JSON"
-        icon={<FaFileUpload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />}
+        className={classNames("w-full mb-4", {
+          "button-default": isLoaded
+        })}
+        boxClassName={classNames({
+          "bg-transparent border-none hover:bg-transparent": isLoaded
+        })}
+        labelClassName={classNames({
+          "bg-transparent text-white p-0": isLoaded
+        })}
+        label={!isLoaded ? "Import questions data" : `${state?.provider?.toUpperCase()} ${state?.examCode?.toUpperCase()}`}
+        helperText={!isLoaded ? "JSON" : undefined}
+        icon={!isLoaded ?
+          <FaFileUpload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" /> :
+          undefined
+        }
         accept=".json"
         onChange={handleReadFile}
       />
       {currentQuestion && <QuestionPage {...currentQuestion} />}
-      <button
-        className="button-default"
-        onClick={handleNextQuestion}
-      >
-        Next
-      </button>
+      {isLoaded &&
+        <button
+          className="button-default"
+          onClick={handleNextQuestion}
+        >
+          {currentQuestion ? "Next" : "Start"}
+        </button>
+      }
     </div>
   );
 };

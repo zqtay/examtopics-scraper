@@ -95,7 +95,7 @@ export default function Home() {
     state?.questionLinks?.length === state?.questions?.length;
 
   return (
-    <div className="max-w-[32rem] mx-auto flex flex-col justify-center">
+    <div className="max-w-[48rem] mx-auto flex flex-col justify-center">
       <div className="flex flex-wrap gap-4 justify-center items-center">
         <Dropdown
           className="flex-1 min-w-60"
