@@ -13,6 +13,10 @@ const Settings = () => {
     saveSettings(draft);
   };
 
+  useEffect(() => {
+    setDraft(settings);
+  }, [settings]);
+
   return <div>
     <div
       className="mb-4 text-lg flex items-center cursor-pointer"
