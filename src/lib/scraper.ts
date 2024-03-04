@@ -138,7 +138,7 @@ export const getQuestions = async (
           const body = doc.querySelector(".question-body > .card-text")?.innerHTML.trim();
           const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
             .map((e: Element) =>
-              e.textContent?.trim().replaceAll('\t', "").replaceAll('\n', "") ?? ""
+              e.innerHTML?.trim() ?? ""
             );
           const answer = doc.getElementsByClassName("correct-answer")[0]?.innerHTML.trim();
           const answerDescription = doc.getElementsByClassName("answer-description")[0]?.innerHTML.trim();
