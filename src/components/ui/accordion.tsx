@@ -2,7 +2,7 @@ import { FC, ReactNode } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 type AccordionProps = {
-  label: string;
+  label: ReactNode;
   collapsed?: boolean;
   children: ReactNode;
   toggle?: () => void;

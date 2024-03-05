@@ -1,12 +1,16 @@
 import { PROXY_BASE_URL, Question, ScraperState } from "@/lib/scraper";
-import { ChangeEvent, FC, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FC, MouseEvent, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
-import { FaFileUpload, FaSortNumericDown, FaRandom, FaChevronDown, FaChevronUp, FaListOl } from "react-icons/fa";
+import { FaFileUpload, FaSortNumericDown, FaRandom, FaChevronDown, FaChevronUp, FaListOl, FaSave } from "react-icons/fa";
 import classNames from "classnames";
 import _ from "lodash";
 import Dropdown from "@/components/ui/dropdown";
 import Accordion from "@/components/ui/accordion";
 import TextArea from "@/components/ui/textarea";
+
+type QuestionPageProps = Question & {
+  update: (value: Question) => void;
+};
 
 const voteColors = [
   "bg-red-300",
@@ -22,7 +26,7 @@ const voteColors = [
 // Add proxy path to relative path
 const srcToProxyUrl = (html?: string) => {
   if (!html) return "";
-  return html?.replaceAll(`src="/`, `src="${PROXY_BASE_URL}/`)
+  return html?.replaceAll(`src="/`, `src="${PROXY_BASE_URL}/`);
 };
 
 const Test = () => {
@@ -38,9 +42,12 @@ const Test = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = (e.target?.result);
-      if (typeof text === "string") {
-        const data = JSON.parse(text);
-        setState(data);
+      if (typeof text !== "string") return;
+      const data = JSON.parse(text);
+      setState(data);
+      if (data?.questions) {
+        // Reset current question
+        setCurrentQuestion(undefined);
       }
     };
     const file = e.target.files?.[0];
@@ -98,7 +105,6 @@ const Test = () => {
   const handleSelect = <T,>(url?: T) => {
     if (!questions || typeof url !== "string") return;
     const question = questions.find(e => e.url === url);
-    console.log(url)
     if (question) {
       if (currentQuestion?.url) {
         // Store past questions
@@ -108,19 +114,34 @@ const Test = () => {
     }
   };
 
+  const handleUpdateQuestion = (value: Question) => {
+    setState(prev => {
+      const _questions = prev?.questions ? [...prev?.questions] : [];
+      const index = _questions?.findIndex(e => value.url === e.url);
+      // Update question list
+      if (_questions && index !== undefined && index !== -1) {
+        _questions[index] = value;
+        return {
+          ...prev,
+          questions: _questions
+        };
+      }
+      return prev;
+    });
+  };
+
   const isLoaded = state?.provider && state?.examCode && state?.questions;
 
   useEffect(() => {
-    // Reset current question
-    setCurrentQuestion(undefined);
-    if (state?.questions) {
-      const _questions = state.questions.map(e => ({
-        ...e,
-        order: `${("0000" + e.topic).slice(-4)}-${("0000" + e.index).slice(-4)}`
-      }))
-      setQuestions(_.sortBy(_questions, ['order']));
+    // Sort by topic and question index
+    const _questions = _.sortBy(
+      state?.questions,
+      o => `${("0000" + o.topic).slice(-4)}-${("0000" + o.index).slice(-4)}`);
+    setQuestions(_questions);
+    if (currentQuestion?.url) {
+      setCurrentQuestion(_questions.find(e => e.url === currentQuestion.url));
     }
-  }, [state]);
+  }, [state?.questions]);
 
   return (
     <div className="h-full max-w-[48rem] mx-auto flex flex-col justify-center">
@@ -135,10 +156,13 @@ const Test = () => {
           labelClassName={classNames({
             "bg-transparent text-white p-0": isLoaded
           })}
-          label={!isLoaded ? "Import questions data" : `${state?.provider?.toUpperCase()} ${state?.examCode?.toUpperCase()}`}
+          label={!isLoaded ?
+            "Import questions data" :
+            `${state?.provider?.toUpperCase()} ${state?.examCode?.toUpperCase()}`
+          }
           helperText={!isLoaded ? "JSON" : undefined}
           icon={!isLoaded ?
-            <FaFileUpload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" /> :
+            <FaFileUpload className="size-8 mb-4 text-gray-500 dark:text-gray-400" /> :
             undefined
           }
           accept=".json"
@@ -155,7 +179,7 @@ const Test = () => {
             icon={<FaListOl size="1.25rem" />}
           />
           <button
-            className="button-alt py-1 px-3"
+            className="button-alt px-3"
             onClick={handleToggleOrder}
           >
             {order === "ascending" && <FaSortNumericDown size="1.25rem" />}
@@ -163,8 +187,11 @@ const Test = () => {
           </button>
         </>}
       </div>
-      {currentQuestion && <QuestionPage {...currentQuestion} />}
-      <div className="h-[40px]"></div>
+      {currentQuestion && <QuestionPage
+        {...currentQuestion}
+        update={handleUpdateQuestion}
+      />}
+      <div className="h-[48px]"></div>
       {isLoaded && <div className="fixed w-full bottom-0 left-0 bg-white">
         <div className="container mx-auto p-2">
           <div className="flex justify-center gap-2 w-full max-w-[48rem] mx-auto">
@@ -190,37 +217,65 @@ const Test = () => {
   );
 };
 
-const QuestionPage: FC<Question> = ({
-  topic, index, url, body, options, answer, answerDescription, votes, comments, notes
+const QuestionPage: FC<QuestionPageProps> = ({
+  topic,
+  index,
+  url,
+  body,
+  options,
+  answer,
+  answerDescription,
+  votes,
+  comments,
+  notes,
+  update,
 }) => {
   const [visible, setVisible] = useState({
-    options: false, 
-    secret: false, 
-    answer: false, 
-    comments: false, 
+    options: false,
+    secret: false,
+    answer: false,
+    comments: false,
     notes: false,
   });
   const voteCount = votes?.reduce((prev, curr) => prev + curr.count, 0);
-  const [notesDraft, setNotesDraft] = useState(notes ?? "");
+  const [notesDraft, setNotesDraft] = useState<string | undefined>(notes);
+
+  const handleSaveNotes = (e: MouseEvent) => {
+    e.stopPropagation();
+    update({
+      topic,
+      index,
+      url,
+      body,
+      options,
+      answer,
+      answerDescription,
+      votes,
+      comments,
+      notes: notesDraft
+    });
+  };
 
   useEffect(() => {
-    setVisible({ 
-      options: true, 
-      secret: false, 
-      answer: false, 
-      comments: false, 
-      notes: false 
+    // Next question
+    setVisible({
+      options: true,
+      secret: false,
+      answer: false,
+      comments: false,
+      notes: false
     });
+    setNotesDraft(notes);
   }, [url]);
 
-  return <div className="mb-2">
+  return <div>
     <div
       className="text-lg font-semibold cursor-pointer mb-2"
       onClick={() => window.open(url, '_blank')}>
       {`Topic ${topic} Question ${index}`}
     </div>
     <div
-      className="question-body"
+      className="break-words"
       dangerouslySetInnerHTML={{ __html: srcToProxyUrl(body) }}
     />
     {options && <>
@@ -255,7 +310,7 @@ const QuestionPage: FC<Question> = ({
             Description
           </div>
           <div
-            className="border rounded-md p-2"
+            className="border rounded-md p-2 break-words"
             dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answerDescription) }}
           />
         </>
@@ -295,13 +350,21 @@ const QuestionPage: FC<Question> = ({
       </Accordion>
       <hr className="my-4" />
       <Accordion
-        label="Notes"
+        label={<div className="w-full flex gap-2 items-center">
+          <div className="flex-1">Notes</div>
+          {notes !== notesDraft &&
+            <FaSave
+              className="mr-2"
+              onClick={handleSaveNotes}
+            />
+          }
+        </div>}
         collapsed={!visible.notes}
         toggle={() => setVisible(prev => ({ ...prev, notes: !prev.notes }))}
       >
         <TextArea
           boxClassName="min-h-48"
-          value={notesDraft}
+          value={notesDraft ?? ""}
           onChange={e => setNotesDraft(e.target.value)}
         />
       </Accordion>
