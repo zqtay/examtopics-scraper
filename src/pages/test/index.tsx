@@ -1,4 +1,4 @@
-import { Question, ScraperState } from "@/lib/scraper";
+import { PROXY_BASE_URL, Question, ScraperState } from "@/lib/scraper";
 import { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
 import { FaFileUpload, FaSortNumericDown, FaRandom } from "react-icons/fa";
@@ -15,6 +15,12 @@ const voteColors = [
   "bg-purple-300",
   "bg-pink-300",
 ];
+
+// Add proxy path to relative path
+const srcToProxyUrl = (html?: string) => {
+  if (!html) return "";
+  return html?.replaceAll(`src="/`, `src="${PROXY_BASE_URL}/`)
+};
 
 const Test = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -92,7 +98,11 @@ const Test = () => {
     // Reset current question
     setCurrentQuestion(undefined);
     if (state?.questions) {
-      setQuestions(_.sortBy(state?.questions, ['topic', 'index']));
+      const _questions = state.questions.map(e => ({
+        ...e,
+        order: `${("0000" + e.topic).slice(-4)}-${("0000" + e.index).slice(-4)}`
+      }))
+      setQuestions(_.sortBy(_questions, ['order']));
     }
   }, [state]);
 
@@ -166,7 +176,7 @@ const QuestionPage: FC<Question> = ({
     </div>
     <div
       className="question-body"
-      dangerouslySetInnerHTML={{ __html: body ?? "" }}
+      dangerouslySetInnerHTML={{ __html: srcToProxyUrl(body)}}
     />
     {options && <>
       <hr className="my-4" />
@@ -174,7 +184,7 @@ const QuestionPage: FC<Question> = ({
         Options
       </div>
       <div>
-        {options?.map((e, i) => <div key={i} dangerouslySetInnerHTML={{ __html: e }} />)}
+        {options?.map((e, i) => <div key={i} dangerouslySetInnerHTML={{ __html: srcToProxyUrl(e) }} />)}
       </div>
     </>
     }
@@ -189,14 +199,14 @@ const QuestionPage: FC<Question> = ({
       <div className="font-semibold my-2">
         Suggested answer
       </div>
-      <div dangerouslySetInnerHTML={{ __html: answer ?? "" }} />
+      <div dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answer)}} />
       {answerDescription && <>
         <div className="font-semibold my-2">
           Description
         </div>
         <div
           className="border rounded-md p-2"
-          dangerouslySetInnerHTML={{ __html: answerDescription ?? "" }}
+          dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answerDescription)}}
         />
       </>
       }
