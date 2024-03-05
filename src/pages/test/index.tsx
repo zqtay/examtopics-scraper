@@ -6,6 +6,7 @@ import classNames from "classnames";
 import _ from "lodash";
 import Dropdown from "@/components/ui/dropdown";
 import Accordion from "@/components/ui/accordion";
+import TextArea from "@/components/ui/textarea";
 
 const voteColors = [
   "bg-red-300",
@@ -190,13 +191,16 @@ const Test = () => {
 };
 
 const QuestionPage: FC<Question> = ({
-  topic, index, url, body, options, answer, answerDescription, votes, comments
+  topic, index, url, body, options, answer, answerDescription, votes, comments, notes
 }) => {
-  const [visible, setVisible] = useState({ secret: false, answer: false, comments: false });
+  const [visible, setVisible] = useState({
+    secret: false, answer: false, comments: false, notes: false,
+  });
   const voteCount = votes?.reduce((prev, curr) => prev + curr.count, 0);
+  const [notesDraft, setNotesDraft] = useState(notes ?? "");
 
   useEffect(() => {
-    setVisible({ secret: false, answer: false, comments: false });
+    setVisible({ secret: false, answer: false, comments: false, notes: false });
   }, [url]);
 
   return <div className="mb-2">
@@ -277,6 +281,18 @@ const QuestionPage: FC<Question> = ({
             {e}
           </div>)}
         </div>
+      </Accordion>
+      <hr className="my-4" />
+      <Accordion
+        label="Notes"
+        collapsed={!visible.notes}
+        toggle={() => setVisible(prev => ({ ...prev, notes: !prev.notes }))}
+      >
+        <TextArea
+          boxClassName="min-h-48"
+          value={notesDraft}
+          onChange={e => setNotesDraft(e.target.value)}
+        />
       </Accordion>
     </>}
   </div>;

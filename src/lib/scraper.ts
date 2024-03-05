@@ -15,6 +15,7 @@ export type Question = {
     isMostVoted: boolean;
   }[] | undefined;
   comments: string[];
+  notes?: string | undefined;
 };
 
 export type GetQuestionLinksResponse = {
