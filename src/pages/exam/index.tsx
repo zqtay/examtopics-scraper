@@ -1,5 +1,5 @@
 import { PROXY_BASE_URL, Question, ScraperState } from "@/lib/scraper";
-import { ChangeEvent, FC, MouseEvent, useEffect, useState } from "react";
+import { ChangeEvent, FC, MouseEvent, useContext, useEffect, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
 import {
   FaFileUpload,
@@ -15,6 +15,7 @@ import _ from "lodash";
 import Dropdown from "@/components/ui/dropdown";
 import Accordion from "@/components/ui/accordion";
 import TextArea from "@/components/ui/textarea";
+import { ExamContext } from "@/context/exam";
 
 type QuestionPageProps = Question & {
   update: (value: Partial<Question>) => void;
@@ -38,8 +39,7 @@ const srcToProxyUrl = (html?: string) => {
 };
 
 const Test = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [state, setState] = useState<ScraperState>();
+  const { examState, setExamState } = useContext(ExamContext);
   const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [questions, setQuestions] = useState<Question[]>();
   const [pastQuestionUrls, setPastQuestionUrls] = useState<string[]>([]);
@@ -52,7 +52,7 @@ const Test = () => {
       const text = (e.target?.result);
       if (typeof text !== "string") return;
       const data = JSON.parse(text);
-      setState(data);
+      setExamState(data);
       if (data?.questions) {
         // Reset current question
         setCurrentQuestion(undefined);
@@ -123,7 +123,7 @@ const Test = () => {
   };
 
   const handleUpdateQuestion = (value: Partial<Question>) => {
-    setState(prev => {
+    setExamState(prev => {
       const _questions = prev?.questions ? [...prev?.questions] : [];
       const index = _questions?.findIndex(e => value.url === e.url);
       // Update question list
@@ -138,18 +138,18 @@ const Test = () => {
     });
   };
 
-  const isLoaded = state?.provider && state?.examCode && state?.questions;
+  const isLoaded = examState?.provider && examState?.examCode && examState?.questions;
 
   useEffect(() => {
     // Sort by topic and question index
     const _questions = _.sortBy(
-      state?.questions,
+      examState?.questions,
       o => `${("0000" + o.topic).slice(-4)}-${("0000" + o.index).slice(-4)}`);
     setQuestions(_questions);
     if (currentQuestion?.url) {
       setCurrentQuestion(_questions.find(e => e.url === currentQuestion.url));
     }
-  }, [state?.questions]);
+  }, [examState?.questions]);
 
   return (
     <div className="h-full max-w-[48rem] mx-auto flex flex-col justify-center">
@@ -166,7 +166,7 @@ const Test = () => {
           })}
           label={!isLoaded ?
             "Import questions data" :
-            `${state?.provider?.toUpperCase()} ${state?.examCode?.toUpperCase()}`
+            `${examState?.provider?.toUpperCase()} ${examState?.examCode?.toUpperCase()}`
           }
           helperText={!isLoaded ? "JSON" : undefined}
           icon={!isLoaded ?
@@ -187,13 +187,14 @@ const Test = () => {
               </div>,
               value: e.url,
             }))}
-            buttonClassName="px-3 h-full button-alt border-none"
+            className="mr-2"
+            buttonClassName="button-alt px-3 h-full"
             menuClassName="w-32 max-h-[24rem] overflow-y-auto -ml-10"
             label={null}
             icon={<FaListOl size="1.25rem" />}
           />
           <button
-            className="button-alt px-3 border-none"
+            className="button-alt px-3"
             onClick={handleToggleOrder}
           >
             {order === "ascending" && <FaSortNumericDown size="1.25rem" />}

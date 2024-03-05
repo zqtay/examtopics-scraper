@@ -1,3 +1,4 @@
+import { ExamState } from "./examtopics";
 import { fetchPage } from "./fetcher";
 import { sleep } from "./utils";
 
@@ -36,14 +37,11 @@ export type GetQuestionsResponse = {
 };
 
 export type ScraperState = {
-  provider?: string;
-  examCode?: string;
   isInProgress?: boolean;
   lastDiscussionListPageIndex?: number;
   lastQuestionLinkIndex?: number;
   questionLinks?: string[];
-  questions?: Question[];
-};
+} & ExamState;
 
 export const PROXY_BASE_URL = "/api/examtopics";
 const ORIGIN_BASE_URL = "https://www.examtopics.com";
