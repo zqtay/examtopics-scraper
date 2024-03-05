@@ -5,7 +5,7 @@ import { FaAngleDown } from "react-icons/fa";
 type ItemValue = string | number | undefined;
 
 type Item = {
-  label: string;
+  label: ReactNode;
   value: ItemValue;
 };
 

@@ -16,6 +16,7 @@ export type Question = {
   }[] | undefined;
   comments: string[];
   notes?: string;
+  marked?: boolean;
 };
 
 export type GetQuestionLinksResponse = {

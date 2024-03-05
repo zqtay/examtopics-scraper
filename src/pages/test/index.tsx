@@ -1,7 +1,15 @@
 import { PROXY_BASE_URL, Question, ScraperState } from "@/lib/scraper";
-import { ChangeEvent, FC, MouseEvent, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FC, MouseEvent, useEffect, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
-import { FaFileUpload, FaSortNumericDown, FaRandom, FaChevronDown, FaChevronUp, FaListOl, FaSave } from "react-icons/fa";
+import {
+  FaFileUpload,
+  FaSortNumericDown,
+  FaRandom,
+  FaListOl,
+  FaSave,
+  FaRegStar,
+  FaStar
+} from "react-icons/fa";
 import classNames from "classnames";
 import _ from "lodash";
 import Dropdown from "@/components/ui/dropdown";
@@ -9,7 +17,7 @@ import Accordion from "@/components/ui/accordion";
 import TextArea from "@/components/ui/textarea";
 
 type QuestionPageProps = Question & {
-  update: (value: Question) => void;
+  update: (value: Partial<Question>) => void;
 };
 
 const voteColors = [
@@ -114,13 +122,13 @@ const Test = () => {
     }
   };
 
-  const handleUpdateQuestion = (value: Question) => {
+  const handleUpdateQuestion = (value: Partial<Question>) => {
     setState(prev => {
       const _questions = prev?.questions ? [...prev?.questions] : [];
       const index = _questions?.findIndex(e => value.url === e.url);
       // Update question list
       if (_questions && index !== undefined && index !== -1) {
-        _questions[index] = value;
+        _questions[index] = _.merge(_questions[index], value);
         return {
           ...prev,
           questions: _questions
@@ -145,9 +153,9 @@ const Test = () => {
 
   return (
     <div className="h-full max-w-[48rem] mx-auto flex flex-col justify-center">
-      <div className="flex gap-2 mb-4">
+      <div className="flex mb-4">
         <Dropzone
-          className={classNames("flex-1", {
+          className={classNames("flex-1 mr-2", {
             "button-default": isLoaded
           })}
           boxClassName={classNames({
@@ -172,14 +180,20 @@ const Test = () => {
           <Dropdown
             value={currentQuestion?.url}
             onChange={handleSelect}
-            options={questions?.map(e => ({ label: `T${e.topic} Q${e.index}`, value: e.url }))}
-            buttonClassName="px-3 h-full button-alt"
-            menuClassName="w-24 max-h-[24rem] overflow-y-auto"
+            options={questions?.map(e => ({
+              label: <div className="flex gap-2 items-center">
+                {`T${e.topic} Q${e.index}`}
+                {e.marked && <FaStar className="text-amber-400 ml-auto" size="0.75rem" />}
+              </div>,
+              value: e.url,
+            }))}
+            buttonClassName="px-3 h-full button-alt border-none"
+            menuClassName="w-32 max-h-[24rem] overflow-y-auto -ml-10"
             label={null}
             icon={<FaListOl size="1.25rem" />}
           />
           <button
-            className="button-alt px-3"
+            className="button-alt px-3 border-none"
             onClick={handleToggleOrder}
           >
             {order === "ascending" && <FaSortNumericDown size="1.25rem" />}
@@ -228,6 +242,7 @@ const QuestionPage: FC<QuestionPageProps> = ({
   votes,
   comments,
   notes,
+  marked,
   update,
 }) => {
   const [visible, setVisible] = useState({
@@ -243,16 +258,16 @@ const QuestionPage: FC<QuestionPageProps> = ({
   const handleSaveNotes = (e: MouseEvent) => {
     e.stopPropagation();
     update({
-      topic,
-      index,
       url,
-      body,
-      options,
-      answer,
-      answerDescription,
-      votes,
-      comments,
       notes: notesDraft
+    });
+  };
+
+  const handleSaveMarked = (e: MouseEvent) => {
+    e.stopPropagation();
+    update({
+      url,
+      marked: !marked
     });
   };
 
@@ -269,10 +284,21 @@ const QuestionPage: FC<QuestionPageProps> = ({
   }, [url]);
 
   return <div>
-    <div
-      className="text-lg font-semibold cursor-pointer mb-2"
-      onClick={() => window.open(url, '_blank')}>
-      {`Topic ${topic} Question ${index}`}
+    <div className="flex mb-2 items-center">
+      <div
+        className="text-lg font-semibold cursor-pointer"
+        onClick={() => window.open(url, '_blank')}>
+        {`Topic ${topic} Question ${index}`}
+      </div>
+      <div
+        className="ml-4 cursor-pointer"
+        onClick={handleSaveMarked}
+      >
+        {marked ?
+          <FaStar size="1.25rem" className="text-amber-400" /> :
+          <FaRegStar size="1.25rem" className="text-gray-300" />
+        }
+      </div>
     </div>
     <div
       className="break-words"
