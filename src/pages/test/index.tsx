@@ -192,11 +192,11 @@ const Test = () => {
 const QuestionPage: FC<Question> = ({
   topic, index, url, body, options, answer, answerDescription, votes, comments
 }) => {
-  const [visible, setVisible] = useState({ answer: false, comments: false });
+  const [visible, setVisible] = useState({ secret: false, answer: false, comments: false });
   const voteCount = votes?.reduce((prev, curr) => prev + curr.count, 0);
 
   useEffect(() => {
-    setVisible({ answer: false, comments: false });
+    setVisible({ secret: false, answer: false, comments: false });
   }, [url]);
 
   return <div className="mb-2">
@@ -220,44 +220,49 @@ const QuestionPage: FC<Question> = ({
     </>
     }
     <hr className="my-4" />
-    <button
-      className="button-default w-full"
-      onClick={() => setVisible(prev => ({ ...prev, answer: !prev.answer }))}
-    >
-      {visible.answer ? "Hide" : "Show"} answer
-    </button>
-    {visible.answer && <>
-      <div className="font-semibold my-2">
-        Suggested answer
-      </div>
-      <div dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answer) }} />
-      {answerDescription && <>
-        <div className="font-semibold my-2">
-          Description
-        </div>
-        <div
-          className="border rounded-md p-2"
-          dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answerDescription) }}
-        />
-      </>
-      }
-      {voteCount && <>
-        <div className="font-semibold my-2">
-          Votes
-        </div>
-        <div className="flex w-full rounded-md">
-          {votes && votes?.map((e, i) => {
-            const percent = `${Math.round((e.count / voteCount) * 100)}%`;
-            return <div
-              key={i}
-              className={`text-xs p-1 whitespace-nowrap overflow-x-clip ${voteColors[i]}`}
-              style={{ width: percent }}
-            >
-              {`${e.answer} ${percent}`}
-            </div>;
-          })}
-        </div>
-      </>}
+    {!visible.secret &&
+      <button
+        className="button-default w-full"
+        onClick={() => setVisible(prev => ({ ...prev, secret: true, answer: true }))}
+      >
+        Show answer
+      </button>
+    }
+    {visible.secret && <>
+      <Accordion
+        label="Answer"
+        collapsed={!visible.answer}
+        toggle={() => setVisible(prev => ({ ...prev, answer: !prev.answer }))}
+      >
+        <div dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answer) }} />
+        {answerDescription && <>
+          <div className="font-semibold my-2">
+            Description
+          </div>
+          <div
+            className="border rounded-md p-2"
+            dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answerDescription) }}
+          />
+        </>
+        }
+        {voteCount && <>
+          <div className="font-semibold my-2">
+            Votes
+          </div>
+          <div className="flex w-full rounded-md">
+            {votes && votes?.map((e, i) => {
+              const percent = `${Math.round((e.count / voteCount) * 100)}%`;
+              return <div
+                key={i}
+                className={`text-xs p-1 whitespace-nowrap overflow-x-clip ${voteColors[i]}`}
+                style={{ width: percent }}
+              >
+                {`${e.answer} ${percent}`}
+              </div>;
+            })}
+          </div>
+        </>}
+      </Accordion>
       <hr className="my-4" />
       <Accordion
         label="Comments"
