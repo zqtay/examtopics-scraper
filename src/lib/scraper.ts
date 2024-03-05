@@ -43,7 +43,7 @@ export type ScraperState = {
   questions?: Question[];
 };
 
-const PROXY_BASE_URL = "/api/examtopics";
+export const PROXY_BASE_URL = "/api/examtopics";
 const ORIGIN_BASE_URL = "https://www.examtopics.com";
 
 export const getQuestionLinks = async (
