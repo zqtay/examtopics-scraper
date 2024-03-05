@@ -194,13 +194,23 @@ const QuestionPage: FC<Question> = ({
   topic, index, url, body, options, answer, answerDescription, votes, comments, notes
 }) => {
   const [visible, setVisible] = useState({
-    secret: false, answer: false, comments: false, notes: false,
+    options: false, 
+    secret: false, 
+    answer: false, 
+    comments: false, 
+    notes: false,
   });
   const voteCount = votes?.reduce((prev, curr) => prev + curr.count, 0);
   const [notesDraft, setNotesDraft] = useState(notes ?? "");
 
   useEffect(() => {
-    setVisible({ secret: false, answer: false, comments: false, notes: false });
+    setVisible({ 
+      options: true, 
+      secret: false, 
+      answer: false, 
+      comments: false, 
+      notes: false 
+    });
   }, [url]);
 
   return <div className="mb-2">
@@ -215,12 +225,13 @@ const QuestionPage: FC<Question> = ({
     />
     {options && <>
       <hr className="my-4" />
-      <div className="font-semibold mb-2">
-        Options
-      </div>
-      <div>
+      <Accordion
+        label="Options"
+        collapsed={!visible.options}
+        toggle={() => setVisible(prev => ({ ...prev, options: !prev.options }))}
+      >
         {options?.map((e, i) => <div key={i} dangerouslySetInnerHTML={{ __html: srcToProxyUrl(e) }} />)}
-      </div>
+      </Accordion>
     </>
     }
     <hr className="my-4" />
