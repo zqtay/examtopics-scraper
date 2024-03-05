@@ -142,7 +142,7 @@ export default function Home() {
           Export
         </button>
       }
-      <hr className="my-6" />
+      <hr className="my-4" />
       <Settings />
     </div>
   );

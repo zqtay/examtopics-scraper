@@ -1,10 +1,14 @@
 import { ScraperSettings, SettingsContext } from "@/context/settings";
-import { useContext, useEffect, useState } from "react";
+import { FC, useContext, useEffect, useState } from "react";
 import InputText from "../ui/inputtext";
 import _ from "lodash";
-import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
-const Settings = () => {
+type SettingsProps = {
+  disabled?: boolean;
+};
+
+const Settings: FC<SettingsProps> = ({ disabled }) => {
   const { settings, saveSettings } = useContext(SettingsContext);
   const [draft, setDraft] = useState<ScraperSettings>(settings);
   const [visible, setVisible] = useState(false);
@@ -19,15 +23,14 @@ const Settings = () => {
 
   return <div>
     <div
-      className="mb-4 text-lg flex items-center cursor-pointer"
+      className="mb-4 flex items-center cursor-pointer"
       onClick={() => setVisible(prev => !prev)}
     >
-      <span className="flex-1"></span>
-      <span>Settings</span>
+      <span className="font-semibold">Settings</span>
       <span className="flex-1" >
         {visible ?
-          <FaAngleUp className="ml-auto" /> :
-          <FaAngleDown className="ml-auto" />
+          <FaChevronUp className="ml-auto" /> :
+          <FaChevronDown className="ml-auto" />
         }
       </span>
     </div>

@@ -1,9 +1,16 @@
 import { PROXY_BASE_URL, Question, ScraperState } from "@/lib/scraper";
-import { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FC, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
-import { FaFileUpload, FaSortNumericDown, FaRandom } from "react-icons/fa";
+import { FaFileUpload, FaSortNumericDown, FaRandom, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import classNames from "classnames";
 import _ from "lodash";
+
+type SectionProps = {
+  label: string;
+  collapsed?: boolean;
+  content: ReactNode;
+  toggle?: () => void;
+};
 
 const voteColors = [
   "bg-red-300",
@@ -137,21 +144,26 @@ const Test = () => {
         </button>}
       </div>
       {currentQuestion && <QuestionPage {...currentQuestion} />}
-      {isLoaded && <div className="flex gap-4">
-        {pastQuestionUrls.length > 0 &&
-          <button
-            className="button-alt flex-1"
-            onClick={handlePrev}
-          >
-            Previous
-          </button>
-        }
-        <button
-          className="button-default flex-1"
-          onClick={handleNext}
-        >
-          {currentQuestion ? "Next" : "Start"}
-        </button>
+      <div className="h-[40px]"></div>
+      {isLoaded && <div className="fixed w-full bottom-0 left-0 p-2 bg-white">
+        <div className="container mx-auto">
+          <div className="flex justify-center gap-2 w-full max-w-[48rem] mx-auto">
+            {pastQuestionUrls.length > 0 &&
+              <button
+                className="button-alt flex-1"
+                onClick={handlePrev}
+              >
+                Previous
+              </button>
+            }
+            <button
+              className="button-default flex-1"
+              onClick={handleNext}
+            >
+              {currentQuestion ? "Next" : "Start"}
+            </button>
+          </div>
+        </div>
       </div>
       }
     </div>
@@ -161,14 +173,14 @@ const Test = () => {
 const QuestionPage: FC<Question> = ({
   topic, index, url, body, options, answer, answerDescription, votes, comments
 }) => {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState({ answer: false, comments: false });
   const voteCount = votes?.reduce((prev, curr) => prev + curr.count, 0);
 
   useEffect(() => {
-    setVisible(false);
+    setVisible({ answer: false, comments: false });
   }, [url]);
 
-  return <div className="mb-4">
+  return <div className="mb-2">
     <div
       className="text-lg font-semibold cursor-pointer mb-2"
       onClick={() => window.open(url, '_blank')}>
@@ -176,7 +188,7 @@ const QuestionPage: FC<Question> = ({
     </div>
     <div
       className="question-body"
-      dangerouslySetInnerHTML={{ __html: srcToProxyUrl(body)}}
+      dangerouslySetInnerHTML={{ __html: srcToProxyUrl(body) }}
     />
     {options && <>
       <hr className="my-4" />
@@ -191,22 +203,22 @@ const QuestionPage: FC<Question> = ({
     <hr className="my-4" />
     <button
       className="button-default w-full"
-      onClick={() => setVisible(prev => !prev)}
+      onClick={() => setVisible(prev => ({ ...prev, answer: !prev.answer }))}
     >
-      {visible ? "Hide" : "Show"} answer
+      {visible.answer ? "Hide" : "Show"} answer
     </button>
-    {visible && <>
+    {visible.answer && <>
       <div className="font-semibold my-2">
         Suggested answer
       </div>
-      <div dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answer)}} />
+      <div dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answer) }} />
       {answerDescription && <>
         <div className="font-semibold my-2">
           Description
         </div>
         <div
           className="border rounded-md p-2"
-          dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answerDescription)}}
+          dangerouslySetInnerHTML={{ __html: srcToProxyUrl(answerDescription) }}
         />
       </>
       }
@@ -219,7 +231,7 @@ const QuestionPage: FC<Question> = ({
             const percent = `${Math.round((e.count / voteCount) * 100)}%`;
             return <div
               key={i}
-              className={`text-xs p-1 white-space-nowrap overflow-x-clip ${voteColors[i]}`}
+              className={`text-xs p-1 whitespace-nowrap overflow-x-clip ${voteColors[i]}`}
               style={{ width: percent }}
             >
               {`${e.answer} ${percent}`}
@@ -227,21 +239,37 @@ const QuestionPage: FC<Question> = ({
           })}
         </div>
       </>}
-    </>}
-    {visible && <>
       <hr className="my-4" />
-      <div className="font-semibold mb-2">
-        Comments
-      </div>
-      <div className="flex flex-col gap-2">
-        {comments && comments?.map((e, i) => <div
-          key={i}
-          className="border rounded-md p-2"
-        >
-          {e}
-        </div>)}
-      </div>
+      <Section
+        label="Comments"
+        collapsed={!visible.comments}
+        toggle={() => setVisible(prev => ({ ...prev, comments: !prev.comments }))}
+        content={<div className="flex flex-col gap-2">
+          {comments && comments?.map((e, i) => <div
+            key={i}
+            className="border rounded-md p-2"
+          >
+            {e}
+          </div>)}
+        </div>}
+      />
     </>}
+  </div>;
+};
+
+const Section: FC<SectionProps> = ({ label, collapsed, content, toggle }) => {
+  return <div>
+    <div
+      className="flex font-semibold mb-2 items-center cursor-pointer"
+      onClick={toggle}
+    >
+      {label}
+      {collapsed ?
+        <FaChevronDown className="ml-auto" /> :
+        <FaChevronUp className="ml-auto" />
+      }
+    </div>
+    {!collapsed && content}
   </div>;
 };
 
