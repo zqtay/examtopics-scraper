@@ -1,16 +1,11 @@
 import { PROXY_BASE_URL, Question, ScraperState } from "@/lib/scraper";
 import { ChangeEvent, FC, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import Dropzone from "@/components/ui/dropzone";
-import { FaFileUpload, FaSortNumericDown, FaRandom, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaFileUpload, FaSortNumericDown, FaRandom, FaChevronDown, FaChevronUp, FaListOl } from "react-icons/fa";
 import classNames from "classnames";
 import _ from "lodash";
-
-type SectionProps = {
-  label: string;
-  collapsed?: boolean;
-  content: ReactNode;
-  toggle?: () => void;
-};
+import Dropdown from "@/components/ui/dropdown";
+import Accordion from "@/components/ui/accordion";
 
 const voteColors = [
   "bg-red-300",
@@ -99,6 +94,19 @@ const Test = () => {
     }
   };
 
+  const handleSelect = <T,>(url?: T) => {
+    if (!questions || typeof url !== "string") return;
+    const question = questions.find(e => e.url === url);
+    console.log(url)
+    if (question) {
+      if (currentQuestion?.url) {
+        // Store past questions
+        setPastQuestionUrls(prev => [...prev, currentQuestion.url!]);
+      }
+      setCurrentQuestion(question);
+    }
+  };
+
   const isLoaded = state?.provider && state?.examCode && state?.questions;
 
   useEffect(() => {
@@ -135,18 +143,29 @@ const Test = () => {
           accept=".json"
           onChange={handleReadFile}
         />
-        {isLoaded && <button
-          className="button-alt py-1 px-3"
-          onClick={handleToggleOrder}
-        >
-          {order === "ascending" && <FaSortNumericDown size="1.25rem" />}
-          {order === "random" && <FaRandom size="1.25rem" />}
-        </button>}
+        {isLoaded && <>
+          <Dropdown
+            value={currentQuestion?.url}
+            onChange={handleSelect}
+            options={questions?.map(e => ({ label: `T${e.topic} Q${e.index}`, value: e.url }))}
+            buttonClassName="px-3 h-full button-alt"
+            menuClassName="w-24 max-h-[24rem] overflow-y-auto"
+            label={null}
+            icon={<FaListOl size="1.25rem" />}
+          />
+          <button
+            className="button-alt py-1 px-3"
+            onClick={handleToggleOrder}
+          >
+            {order === "ascending" && <FaSortNumericDown size="1.25rem" />}
+            {order === "random" && <FaRandom size="1.25rem" />}
+          </button>
+        </>}
       </div>
       {currentQuestion && <QuestionPage {...currentQuestion} />}
       <div className="h-[40px]"></div>
-      {isLoaded && <div className="fixed w-full bottom-0 left-0 p-2 bg-white">
-        <div className="container mx-auto">
+      {isLoaded && <div className="fixed w-full bottom-0 left-0 bg-white">
+        <div className="container mx-auto p-2">
           <div className="flex justify-center gap-2 w-full max-w-[48rem] mx-auto">
             {pastQuestionUrls.length > 0 &&
               <button
@@ -240,36 +259,21 @@ const QuestionPage: FC<Question> = ({
         </div>
       </>}
       <hr className="my-4" />
-      <Section
+      <Accordion
         label="Comments"
         collapsed={!visible.comments}
         toggle={() => setVisible(prev => ({ ...prev, comments: !prev.comments }))}
-        content={<div className="flex flex-col gap-2">
+      >
+        <div className="flex flex-col gap-2 break-words">
           {comments && comments?.map((e, i) => <div
             key={i}
             className="border rounded-md p-2"
           >
             {e}
           </div>)}
-        </div>}
-      />
+        </div>
+      </Accordion>
     </>}
-  </div>;
-};
-
-const Section: FC<SectionProps> = ({ label, collapsed, content, toggle }) => {
-  return <div>
-    <div
-      className="flex font-semibold mb-2 items-center cursor-pointer"
-      onClick={toggle}
-    >
-      {label}
-      {collapsed ?
-        <FaChevronDown className="ml-auto" /> :
-        <FaChevronUp className="ml-auto" />
-      }
-    </div>
-    {!collapsed && content}
   </div>;
 };
 

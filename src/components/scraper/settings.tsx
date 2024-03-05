@@ -3,6 +3,7 @@ import { FC, useContext, useEffect, useState } from "react";
 import InputText from "../ui/inputtext";
 import _ from "lodash";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import Accordion from "../ui/accordion";
 
 type SettingsProps = {
   disabled?: boolean;
@@ -21,67 +22,61 @@ const Settings: FC<SettingsProps> = ({ disabled }) => {
     setDraft(settings);
   }, [settings]);
 
-  return <div>
-    <div
-      className="mb-4 flex items-center cursor-pointer"
-      onClick={() => setVisible(prev => !prev)}
-    >
-      <span className="font-semibold">Settings</span>
-      <span className="flex-1" >
-        {visible ?
-          <FaChevronUp className="ml-auto" /> :
-          <FaChevronDown className="ml-auto" />
-        }
-      </span>
+  return <Accordion
+    label="Settings"
+    collapsed={!visible}
+    toggle={() => setVisible(prev => !prev)}
+  >
+    <div className="mb-4">
+      <div className="mb-2">Fetch question links</div>
+      <div className="flex flex-wrap gap-4">
+        <InputText
+          className="flex-1 min-w-60"
+          label="Batch size"
+          type="number"
+          value={draft.questionLinks.batchSize.toString()}
+          onChange={e => setDraft(prev => ({ ...prev, questionLinks: { ...prev.questions, batchSize: parseInt(e.target.value) } }))}
+          disabled={disabled}
+        />
+        <InputText
+          className="flex-1 min-w-60"
+          label="Sleep duration between batches"
+          type="number"
+          value={draft.questionLinks.sleepDuration.toString()}
+          onChange={e => setDraft(prev => ({ ...prev, questionLinks: { ...prev.questions, sleepDuration: parseInt(e.target.value) } }))}
+          disabled={disabled}
+        />
+      </div>
     </div>
-    {visible === true && <>
-      <div className="mb-4">
-        <div className="mb-2">Fetch question links</div>
-        <div className="flex flex-wrap gap-4">
-          <InputText
-            className="flex-1 min-w-60"
-            label="Batch size"
-            type="number"
-            value={draft.questionLinks.batchSize.toString()}
-            onChange={e => setDraft(prev => ({ ...prev, questionLinks: { ...prev.questions, batchSize: parseInt(e.target.value) } }))}
-          />
-          <InputText
-            className="flex-1 min-w-60"
-            label="Sleep duration between batches"
-            type="number"
-            value={draft.questionLinks.sleepDuration.toString()}
-            onChange={e => setDraft(prev => ({ ...prev, questionLinks: { ...prev.questions, sleepDuration: parseInt(e.target.value) } }))}
-          />
-        </div>
+    <div>
+      <div className="mb-2">Fetch questions</div>
+      <div className="flex flex-wrap gap-4">
+        <InputText
+          className="flex-1 min-w-60"
+          label="Batch size"
+          type="number"
+          value={draft.questions.batchSize.toString()}
+          onChange={e => setDraft(prev => ({ ...prev, questions: { ...prev.questions, batchSize: parseInt(e.target.value) } }))}
+          disabled={disabled}
+        />
+        <InputText
+          className="flex-1 min-w-60"
+          label="Sleep duration between batches"
+          type="number"
+          value={draft.questions.sleepDuration.toString()}
+          onChange={e => setDraft(prev => ({ ...prev, questions: { ...prev.questions, sleepDuration: parseInt(e.target.value) } }))}
+          disabled={disabled}
+        />
       </div>
-      <div>
-        <div className="mb-2">Fetch questions</div>
-        <div className="flex flex-wrap gap-4">
-          <InputText
-            className="flex-1 min-w-60"
-            label="Batch size"
-            type="number"
-            value={draft.questions.batchSize.toString()}
-            onChange={e => setDraft(prev => ({ ...prev, questions: { ...prev.questions, batchSize: parseInt(e.target.value) } }))}
-          />
-          <InputText
-            className="flex-1 min-w-60"
-            label="Sleep duration between batches"
-            type="number"
-            value={draft.questions.sleepDuration.toString()}
-            onChange={e => setDraft(prev => ({ ...prev, questions: { ...prev.questions, sleepDuration: parseInt(e.target.value) } }))}
-          />
-        </div>
-      </div>
-      <button
-        className="button-default mt-4 w-full"
-        onClick={handleSave}
-        disabled={_.isEqual(draft, settings)}
-      >
-        Save
-      </button>
-    </>}
-  </div>;
+    </div>
+    <button
+      className="button-default mt-4 w-full"
+      onClick={handleSave}
+      disabled={disabled || _.isEqual(draft, settings)}
+    >
+      Save
+    </button>
+  </Accordion>;
 };
 
 export default Settings;

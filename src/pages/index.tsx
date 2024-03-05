@@ -143,7 +143,7 @@ export default function Home() {
         </button>
       }
       <hr className="my-4" />
-      <Settings />
+      <Settings disabled={state?.isInProgress} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { Dispatch, FC, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, FC, ReactNode, SetStateAction, useEffect, useRef, useState } from "react";
 import { FaAngleDown } from "react-icons/fa";
 
 type ItemValue = string | number | undefined;
@@ -20,6 +20,8 @@ type DropdownProps = {
   onChange?: (value: ItemValue) => any;
   placeholder?: string;
   disabled?: boolean;
+  label?: ReactNode;
+  icon?: ReactNode;
   className?: string;
   buttonClassName?: string;
   menuClassName?: string;
@@ -40,7 +42,7 @@ const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
 };
 
 const Dropdown: FC<DropdownProps> = ({
-  options, value, onChange, placeholder, disabled, className, buttonClassName, menuClassName
+  options, value, onChange, placeholder, disabled, label, icon, className, buttonClassName, menuClassName
 }) => {
   const [selected, setSelected] = useState<ItemValue>(value);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -71,13 +73,17 @@ const Dropdown: FC<DropdownProps> = ({
   return <div className={classNames("dropdown", className)}>
     <button
       ref={buttonRef}
-      className={classNames("dropdown-button", buttonClassName)}
+      className={classNames("button-default flex items-center", buttonClassName)}
       type="button"
       onClick={() => setMenuVisible(prev => !prev)}
       disabled={disabled}
     >
-      <span className="flex-1">{value ? (options?.find(e => e.value === value)?.label ?? "") : (placeholder ?? "")}</span>
-      <FaAngleDown />
+      {label ?? ((label === undefined) &&
+        <span className="flex-1">
+          {value ? (options?.find(e => e.value === value)?.label ?? "") : (placeholder ?? "")}
+        </span>
+      )}
+      {icon ?? ((icon === undefined) && <FaAngleDown />)}
     </button>
     <div
       ref={menuRef}
