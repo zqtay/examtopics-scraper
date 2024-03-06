@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import { Question, ScraperState, getQuestionLinks, getQuestions } from "@/lib/scraper";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Dropdown from "@/components/ui/dropdown";
 import Spinner from "@/components/ui/spinner";
 import InputText from "@/components/ui/inputtext";
@@ -8,11 +8,17 @@ import { providerOptions } from "@/lib/examtopics";
 import { SettingsContext } from "@/context/settings";
 import Settings from "@/components/scraper/settings";
 import { saveAs } from 'file-saver';
+import ProgressBar from "@/components/ui/progressbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const [state, setState] = useState<ScraperState>({ provider: "", examCode: "" });
+  const [progress, setProgress] = useState({
+    step: 1,
+    value: 0,
+    max: 0,
+  });
   const { settings } = useContext(SettingsContext);
 
   useEffect(() => {
@@ -27,13 +33,29 @@ export default function Home() {
     }));
   }, [state?.provider]);
 
+  const updateProgress = (value: number, max: number) => {
+    if (progress.step === 1 && state?.questionLinks) {
+      value = value + state?.questionLinks.length;
+      max = max + state?.questionLinks.length;
+    }
+    else if (progress.step === 2 && state?.questions) {
+      value = value + state?.questions.length;
+      max = max + state?.questions.length;
+    }
+    setProgress(prev => ({ ...prev, value, max }));
+  };
+
   const setIsInProgress = (value: boolean) => {
     setState(prev => ({ ...prev, isInProgress: value }));
   };
 
   const handleStartScrape = async () => {
     setIsInProgress(true);
-    await handleScrape();
+    try {
+      await handleScrape();
+    } catch (error) {
+      console.error(error);
+    }
     setIsInProgress(false);
   };
 
@@ -43,13 +65,15 @@ export default function Home() {
     let res: any;
     // No question links
     if (state?.lastQuestionLinkIndex === undefined || !state.questionLinks) {
+      setProgress(prev => ({ ...prev, step: 1 }));
       res = await getQuestionLinks(
         state.provider.toLowerCase(),
         state.examCode.toLowerCase(),
-        state.lastDiscussionListPageIndex ?? 1,
+        state.lastDiscussionListPageIndex,
         undefined,
         settings.questionLinks.batchSize,
-        settings.questionLinks.sleepDuration
+        settings.questionLinks.sleepDuration,
+        updateProgress,
       );
       links = res.data.links;
       setState(prev => ({ ...prev, questionLinks: [...(prev?.questionLinks ?? []), ...links] }));
@@ -66,12 +90,14 @@ export default function Home() {
     }
     // More questions not parsed
     if (links.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
+      setProgress(prev => ({ ...prev, step: 2 }));
       res = await getQuestions(
         links,
         state?.lastQuestionLinkIndex,
         undefined,
         settings.questions.batchSize,
-        settings.questions.sleepDuration
+        settings.questions.sleepDuration,
+        updateProgress,
       );
       setState(prev => ({ ...prev, questions: [...(prev?.questions ?? []), ...res.data.questions] }));
       if (res.status === "success") {
@@ -94,8 +120,8 @@ export default function Home() {
   // Input not provided or scraping in progress
   const isInputDisabled = !state?.provider || !state?.examCode || state.isInProgress;
   // Error happened during scraping, last page index was saved
-  const isInterrupted = state?.lastDiscussionListPageIndex !== undefined ||
-    (state?.lastQuestionLinkIndex !== undefined && Boolean(state?.questionLinks));
+  const isInterrupted = !state?.isInProgress && (state?.lastDiscussionListPageIndex !== undefined ||
+    (state?.lastQuestionLinkIndex !== undefined && Boolean(state?.questionLinks)));
   // All questions are parsed
   const isCompleted = state?.questionLinks && state?.questions &&
     state?.questionLinks?.length === state?.questions?.length;
@@ -122,6 +148,23 @@ export default function Home() {
           disabled={state?.isInProgress || isInterrupted}
         />
       </div>
+      {(state?.isInProgress || isCompleted || isInterrupted) &&
+        <div className="mt-4">
+          <div className="text-sm mb-1">
+            {state?.isInProgress &&
+              `Getting ${progress.step === 1 ? " question links" : progress.step === 2 ? " questions" : ""} ...`
+            }
+            {isInterrupted && `Failed`}
+          </div>
+          <ProgressBar
+            value={progress.value}
+            max={progress.max}
+            showValue={Boolean(progress.max)}
+            barClassName="h-4"
+            labelClassName="text-xs"
+          />
+        </div>
+      }
       {!isCompleted &&
         <button
           className="button-default w-full mt-4"

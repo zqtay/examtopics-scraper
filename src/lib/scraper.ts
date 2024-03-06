@@ -57,22 +57,24 @@ export const getQuestionLinks = async (
   end: number | undefined,
   batchSize: number,
   sleepDuration: number,
+  setProgress?: (value: number, max: number) => any,
 ): Promise<GetQuestionLinksResponse> => {
   // Get last page number first
-  let lastPageIndex = end;
-  if (!lastPageIndex) {
+  if (!end) {
     const doc = await fetchPage(`${PROXY_BASE_URL}/discussions/${provider}`);
-    lastPageIndex = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerHTML.trim());
+    end = parseInt(doc.querySelectorAll(".discussion-list-page-indicator strong")[1].innerHTML.trim());
   }
 
-  console.log(`Parsing from discussion page ${start} to ${lastPageIndex}`);
+  console.log(`Parsing from discussion page ${start} to ${end}`);
 
   let results: string[] = [];
-
+  let parsedCount = 0;
+  const totalCount = end - start + 1;
   let pageIndex = start;
-  while (pageIndex <= lastPageIndex) {
-    const currentBatchSize = pageIndex + batchSize - 1 > lastPageIndex ?
-      (lastPageIndex - pageIndex + 1) : batchSize;
+
+  while (pageIndex <= end) {
+    const currentBatchSize = pageIndex + batchSize - 1 > end ?
+      (end - pageIndex + 1) : batchSize;
     const batch = Array(currentBatchSize).fill(0).map((e, i) => i + pageIndex);
     // Fetch pages in batch
     const promises = batch.map(index =>
@@ -102,8 +104,13 @@ export const getQuestionLinks = async (
         },
       };
     }
-    console.log(`Parsed ${pageIndex + currentBatchSize - start} pages`);
+    parsedCount = pageIndex + currentBatchSize - start;
+    console.log(`Parsed ${parsedCount} pages`);
     console.log(`Collated ${results.length} question links`);
+    // Callback for set progress
+    if (setProgress) {
+      setProgress(parsedCount, totalCount);
+    }
     // Delay before next batch
     if (sleepDuration > 0) {
       sleep(sleepDuration);
@@ -126,12 +133,15 @@ export const getQuestions = async (
   end: number | undefined,
   batchSize: number,
   sleepDuration: number,
+  setProgress?: (value: number, max: number) => any,
 ): Promise<GetQuestionsResponse> => {
   let results: Question[] = [];
-  const lastPageIndex = end ?? links.length - 1;
+  end = end ?? links.length - 1;
+  let parsedCount = 0;
+  const totalCount = end - start + 1;
   let pageIndex = start;
 
-  while (pageIndex <= lastPageIndex) {
+  while (pageIndex <= end) {
     const batch = links.slice(pageIndex, pageIndex + batchSize);
     // Fetch pages in batch
     const promises = batch.map(link =>
@@ -193,7 +203,11 @@ export const getQuestions = async (
         },
       };
     }
-    console.log(`Parsed ${results.length} questions`);
+    parsedCount = results.length;
+    console.log(`Parsed ${parsedCount} questions`);
+    if (setProgress) {
+      setProgress(parsedCount, totalCount);
+    }
     // Delay before next batch
     if (sleepDuration > 0) {
       sleep(sleepDuration);
