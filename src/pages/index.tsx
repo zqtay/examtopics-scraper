@@ -69,12 +69,13 @@ export default function Home() {
       }
     }
     // Failed getting questions previously, resume from last index
-    links = [...(state?.questionLinks ?? []), ...links];
+    // Use new variable to avoid wrong concatenation after reconnect
+    const allLinks = [...(state?.questionLinks ?? []), ...links];
     // More questions not parsed
-    if (links.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
+    if (allLinks.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
       setProgress(prev => ({ ...prev, step: 2 }));
       res = await getQuestions(
-        links,
+        allLinks,
         state?.lastQuestionLinkIndex,
         undefined,
         settings.questions.batchSize,

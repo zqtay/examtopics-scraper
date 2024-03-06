@@ -109,7 +109,7 @@ export const getQuestionLinks = async (
     console.log(`Collated ${results.length} question links`);
     // Callback for set progress
     if (setProgress) {
-      setProgress(pageIndex, end);
+      setProgress(pageIndex + currentBatchSize - 1, end);
     }
     // Delay before next batch
     if (sleepDuration > 0) {
@@ -206,7 +206,7 @@ export const getQuestions = async (
     parsedCount = results.length;
     console.log(`Parsed ${parsedCount} questions`);
     if (setProgress) {
-      setProgress(pageIndex + 1, end + 1);
+      setProgress(pageIndex + batch.length, end + 1);
     }
     // Delay before next batch
     if (sleepDuration > 0) {
