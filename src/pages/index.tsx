@@ -9,10 +9,14 @@ import { SettingsContext } from "@/context/settings";
 import Settings from "@/components/scraper/settings";
 import { saveAs } from 'file-saver';
 import ProgressBar from "@/components/ui/progressbar";
+import { useRouter } from "next/router";
+import { ExamContext } from "@/context/exam";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const router = useRouter();
+  const { examState, setExamState, exportExamState } = useContext(ExamContext);
   const [state, setState] = useState<ScraperState>({ provider: "", examCode: "" });
   const [progress, setProgress] = useState({
     step: 1,
@@ -20,18 +24,6 @@ export default function Home() {
     max: 0,
   });
   const { settings } = useContext(SettingsContext);
-
-  useEffect(() => {
-    // Reset fields
-    setState(prev => ({
-      ...prev,
-      examCode: "",
-      lastDiscussionListPageIndex: undefined,
-      lastQuestionLinkIndex: undefined,
-      questionLinks: undefined,
-      questions: undefined,
-    }));
-  }, [state?.provider]);
 
   const updateProgress = (value: number, max: number) => {
     setProgress(prev => ({ ...prev, value, max }));
@@ -99,14 +91,6 @@ export default function Home() {
     }
   };
 
-  const handleExport = async () => {
-    const blob = new Blob([JSON.stringify(state)], { type: "text/plain;charset=utf-8" });
-    saveAs(
-      blob,
-      `${state?.provider}-${state.examCode}-${state?.questions?.length}.json`
-    );
-  };
-
   // Input not provided or scraping in progress
   const isInputDisabled = !state?.provider || !state?.examCode || state.isInProgress;
   // Error happened during scraping, last page index was saved
@@ -116,11 +100,33 @@ export default function Home() {
   const isCompleted = state?.questionLinks && state?.questions &&
     state?.questionLinks?.length === state?.questions?.length;
 
+  useEffect(() => {
+    // Reset fields
+    setState(prev => ({
+      ...prev,
+      examCode: "",
+      lastDiscussionListPageIndex: undefined,
+      lastQuestionLinkIndex: undefined,
+      questionLinks: undefined,
+      questions: undefined,
+    }));
+  }, [state?.provider]);
+
+  useEffect(() => {
+    if (isInterrupted || isCompleted) {
+      setExamState({
+        provider: state.provider,
+        examCode: state.examCode,
+        questions: state.questions
+      });
+    }
+  }, [isInterrupted, isCompleted]);
+
   return (
     <div className="max-w-[48rem] mx-auto flex flex-col justify-center">
-      <div className="flex flex-wrap gap-4 justify-center items-center">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-2 justify-center items-center">
         <Dropdown
-          className="flex-1 min-w-60"
+          className="flex-1 w-full"
           buttonClassName="w-full"
           menuClassName="overflow-y-auto max-h-72"
           value={state?.provider}
@@ -130,7 +136,7 @@ export default function Home() {
           disabled={state?.isInProgress}
         />
         <InputText
-          className="flex-1 min-w-60"
+          className="flex-1 w-full"
           boxClassName="text-center"
           value={state?.examCode}
           onChange={e => setState(prev => ({ ...prev, examCode: e.target.value }))}
@@ -171,9 +177,20 @@ export default function Home() {
         <button
           className="button-default w-full mt-4"
           disabled={isInputDisabled}
-          onClick={handleExport}
+          onClick={() => {
+            if (examState)
+              exportExamState();
+          }}
         >
           Export
+        </button>
+      }
+      {(isInterrupted || isCompleted) &&
+        <button
+          className="button-default w-full mt-4"
+          onClick={() => router.push("/exam")}
+        >
+          Go to exam
         </button>
       }
       <hr className="my-4" />

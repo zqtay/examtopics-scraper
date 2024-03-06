@@ -29,9 +29,9 @@ const Settings: FC<SettingsProps> = ({ disabled }) => {
   >
     <div className="mb-4">
       <div className="mb-2">Fetch question links</div>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-2">
         <InputText
-          className="flex-1 min-w-60"
+          className="flex-1 w-full"
           label="Batch size"
           type="number"
           value={draft.questionLinks.batchSize.toString()}
@@ -39,7 +39,7 @@ const Settings: FC<SettingsProps> = ({ disabled }) => {
           disabled={disabled}
         />
         <InputText
-          className="flex-1 min-w-60"
+          className="flex-1 w-full"
           label="Sleep duration between batches"
           type="number"
           value={draft.questionLinks.sleepDuration.toString()}
@@ -50,9 +50,9 @@ const Settings: FC<SettingsProps> = ({ disabled }) => {
     </div>
     <div>
       <div className="mb-2">Fetch questions</div>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-2">
         <InputText
-          className="flex-1 min-w-60"
+          className="flex-1 w-full"
           label="Batch size"
           type="number"
           value={draft.questions.batchSize.toString()}
@@ -60,7 +60,7 @@ const Settings: FC<SettingsProps> = ({ disabled }) => {
           disabled={disabled}
         />
         <InputText
-          className="flex-1 min-w-60"
+          className="flex-1 w-full"
           label="Sleep duration between batches"
           type="number"
           value={draft.questions.sleepDuration.toString()}
