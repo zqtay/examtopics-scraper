@@ -34,14 +34,6 @@ export default function Home() {
   }, [state?.provider]);
 
   const updateProgress = (value: number, max: number) => {
-    if (progress.step === 1 && state?.questionLinks) {
-      value = value + state?.questionLinks.length;
-      max = max + state?.questionLinks.length;
-    }
-    else if (progress.step === 2 && state?.questions) {
-      value = value + state?.questions.length;
-      max = max + state?.questions.length;
-    }
     setProgress(prev => ({ ...prev, value, max }));
   };
 
@@ -61,10 +53,10 @@ export default function Home() {
 
   const handleScrape = async () => {
     if (!state?.provider || !state?.examCode) return;
-    let links: string[];
+    let links: string[] = [];
     let res: any;
     // No question links
-    if (state?.lastQuestionLinkIndex === undefined || !state.questionLinks) {
+    if (!state.questionLinks || state?.lastDiscussionListPageIndex !== undefined) {
       setProgress(prev => ({ ...prev, step: 1 }));
       res = await getQuestionLinks(
         state.provider.toLowerCase(),
@@ -85,9 +77,7 @@ export default function Home() {
       }
     }
     // Failed getting questions previously, resume from last index
-    else {
-      links = state?.questionLinks;
-    }
+    links = [...(state?.questionLinks ?? []), ...links];
     // More questions not parsed
     if (links.length + (state?.lastQuestionLinkIndex ?? 0) > (state?.questions?.length ?? 0)) {
       setProgress(prev => ({ ...prev, step: 2 }));
@@ -152,9 +142,10 @@ export default function Home() {
         <div className="mt-4">
           <div className="text-sm mb-1">
             {state?.isInProgress &&
-              `Getting ${progress.step === 1 ? " question links" : progress.step === 2 ? " questions" : ""} ...`
+              `Fetching ${progress.step === 1 ? " question links" : progress.step === 2 ? " questions" : ""} ...`
             }
             {isInterrupted && `Failed`}
+            {isCompleted && `Completed`}
           </div>
           <ProgressBar
             value={progress.value}
