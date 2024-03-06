@@ -15,7 +15,11 @@ export type Question = {
     count: number;
     isMostVoted: boolean;
   }[] | undefined;
-  comments: string[];
+  comments: {
+    date?: string;
+    voteCount?: number;
+    content?: string;
+  }[];
   notes?: string;
   marked?: boolean;
 };
@@ -150,8 +154,16 @@ export const getQuestions = async (
               isMostVoted: e.is_most_voted
             }));
           }
-          const comments = Array.from(doc.getElementsByClassName("comment-content"))
-            .map(e => e.innerHTML.trim());
+          const comments = Array.from(doc.getElementsByClassName("comment-container"))
+            .map(e => {
+              const date = new Date((e.getElementsByClassName("comment-date")[0] as HTMLElement).title);
+              const voteCount = Number(e.getElementsByClassName("upvote-count")[0].textContent?.trim());
+              return {
+                date: isNaN(date.valueOf()) ? undefined : date.toISOString(),
+                voteCount: isNaN(voteCount) ? undefined : voteCount,
+                content: e.getElementsByClassName("comment-content")[0].innerHTML,
+              };
+            });
           console.log(`Parsed topic ${topicNumber} question ${questionNumber}`);
           return {
             url: `${ORIGIN_BASE_URL}${link}`,

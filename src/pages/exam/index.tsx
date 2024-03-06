@@ -8,7 +8,8 @@ import {
   FaListOl,
   FaSave,
   FaRegStar,
-  FaStar
+  FaStar,
+  FaRegThumbsUp
 } from "react-icons/fa";
 import classNames from "classnames";
 import _ from "lodash";
@@ -16,6 +17,7 @@ import Dropdown from "@/components/ui/dropdown";
 import Accordion from "@/components/ui/accordion";
 import TextArea from "@/components/ui/textarea";
 import { ExamContext } from "@/context/exam";
+import { formatDateString } from "@/lib/utils";
 
 type QuestionPageProps = Question & {
   update: (value: Partial<Question>) => void;
@@ -371,7 +373,13 @@ const QuestionPage: FC<QuestionPageProps> = ({
             key={i}
             className="border rounded-md p-2"
           >
-            {e}
+            <div className="mb-2">{e.content}</div>
+            <div className="flex items-center text-xs text-gray-500">
+              {formatDateString(e.date)}
+              {e.voteCount && <>
+                <FaRegThumbsUp className="ml-2 mr-1"/> {e.voteCount}
+              </>}
+            </div>
           </div>)}
         </div>
       </Accordion>
