@@ -16,7 +16,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const router = useRouter();
-  const { examState, setExamState, exportExamState } = useContext(ExamContext);
+  const { examState, saveExamState, exportExamState } = useContext(ExamContext);
   const [state, setState] = useState<ScraperState>({ provider: "", examCode: "" });
   const [progress, setProgress] = useState({
     step: 1,
@@ -115,7 +115,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isInterrupted || isCompleted) {
-      setExamState({
+      saveExamState({
         provider: state.provider,
         examCode: state.examCode,
         questions: state.questions

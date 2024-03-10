@@ -1,12 +1,12 @@
 import { ExamState } from "@/lib/examtopics";
 import saveAs from "file-saver";
-import { useState, createContext, PropsWithChildren, Dispatch, SetStateAction } from 'react';
+import { useState, createContext, PropsWithChildren, Dispatch, SetStateAction, useEffect } from 'react';
 
 export const ExamContext = createContext({} as ExamContextProps);
 
 export type ExamContextProps = {
   examState: ExamState | undefined;
-  setExamState: Dispatch<SetStateAction<ExamState | undefined>>;
+  saveExamState: (value: ExamState) => void;
   exportExamState: () => Promise<void>;
 };
 
@@ -21,9 +21,26 @@ export const ExamStateProvider = ({ children }: PropsWithChildren) => {
     );
   };
 
+  useEffect(() => {
+    const storedValue = localStorage.getItem("exam");
+    if (!storedValue) return;
+    try {
+      const stored = JSON.parse(storedValue);
+      setExamState(stored);
+    }
+    catch (error) {
+      // Ignore error, stored value does not exist or invalid
+    }
+  }, []);
+
+  const saveExamState = (value: ExamState) => {
+    localStorage.setItem("exam", JSON.stringify(value)),
+    setExamState(value);
+  };
+
   const value = {
     examState,
-    setExamState,
+    saveExamState,
     exportExamState,
   };
 

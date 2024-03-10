@@ -41,7 +41,7 @@ const srcToProxyUrl = (html?: string) => {
 };
 
 const Test = () => {
-  const { examState, setExamState } = useContext(ExamContext);
+  const { examState, saveExamState } = useContext(ExamContext);
   const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [questions, setQuestions] = useState<Question[]>();
   const [pastQuestionUrls, setPastQuestionUrls] = useState<string[]>([]);
@@ -54,7 +54,7 @@ const Test = () => {
       const text = (e.target?.result);
       if (typeof text !== "string") return;
       const data = JSON.parse(text);
-      setExamState(data);
+      saveExamState(data);
       if (data?.questions) {
         // Reset current question
         setCurrentQuestion(undefined);
@@ -125,19 +125,19 @@ const Test = () => {
   };
 
   const handleUpdateQuestion = (value: Partial<Question>) => {
-    setExamState(prev => {
-      const _questions = prev?.questions ? [...prev?.questions] : [];
-      const index = _questions?.findIndex(e => value.url === e.url);
-      // Update question list
-      if (_questions && index !== undefined && index !== -1) {
-        _questions[index] = _.merge(_questions[index], value);
-        return {
-          ...prev,
-          questions: _questions
-        };
-      }
-      return prev;
-    });
+    if (!examState) return;
+    let newState = examState;
+    const _questions = examState?.questions ? [...examState?.questions] : [];
+    const index = _questions?.findIndex(e => value.url === e.url);
+    // Update question list
+    if (_questions && index !== undefined && index !== -1) {
+      _questions[index] = _.merge(_questions[index], value);
+      newState = {
+        ...examState,
+        questions: _questions
+      };
+    }
+    saveExamState(newState);
   };
 
   const isLoaded = examState?.provider && examState?.examCode && examState?.questions;
