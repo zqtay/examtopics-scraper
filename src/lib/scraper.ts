@@ -147,8 +147,9 @@ export const getQuestions = async (
     const promises = batch.map(link =>
       fetchPage(`${PROXY_BASE_URL}${link}`)
         .then(doc => {
-          const [, topicNumber] = link?.match(/topic-(\d+)/) ?? [];
-          const [, questionNumber] = link?.match(/question-(\d+)/) ?? [];
+          const header = doc.querySelector(".question-discussion-header > div")?.innerHTML.trim().toLowerCase();
+          const [, topicNumber] = header?.match(/topic\s*#:\s*(\d+)/) ?? [];
+          const [, questionNumber] = header?.match(/question\s*#:\s*(\d+)/) ?? [];
           const body = doc.querySelector(".question-body > .card-text")?.innerHTML.trim();
           const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
             .map((e: Element) =>
