@@ -69,7 +69,6 @@ export const getQuestionLinks = async (
 
   let results: string[] = [];
   let parsedCount = 0;
-  const totalCount = end - start + 1;
   let pageIndex = start;
 
   while (pageIndex <= end) {
@@ -138,7 +137,6 @@ export const getQuestions = async (
   let results: Question[] = [];
   end = end ?? links.length - 1;
   let parsedCount = 0;
-  const totalCount = end - start + 1;
   let pageIndex = start;
 
   while (pageIndex <= end) {
@@ -146,48 +144,10 @@ export const getQuestions = async (
     // Fetch pages in batch
     const promises = batch.map(link =>
       fetchPage(`${PROXY_BASE_URL}${link}`)
-        .then(doc => {
-          const header = doc.querySelector(".question-discussion-header > div")?.innerHTML.trim().toLowerCase();
-          const [, topicNumber] = header?.match(/topic\s*#:\s*(\d+)/) ?? [];
-          const [, questionNumber] = header?.match(/question\s*#:\s*(\d+)/) ?? [];
-          const body = doc.querySelector(".question-body > .card-text")?.innerHTML.trim();
-          const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
-            .map((e: Element) =>
-              e.innerHTML?.trim() ?? ""
-            );
-          const answer = doc.getElementsByClassName("correct-answer")[0]?.innerHTML.trim();
-          const answerDescription = doc.getElementsByClassName("answer-description")[0]?.innerHTML.trim();
-          let votes = doc.querySelector(".voted-answers-tally script")?.innerHTML.trim() ?? undefined;
-          if (votes) {
-            votes = JSON.parse(votes).map((e: any) => ({
-              answer: e.voted_answers,
-              count: e.vote_count,
-              isMostVoted: e.is_most_voted
-            }));
-          }
-          const comments = Array.from(doc.getElementsByClassName("comment-container"))
-            .map(e => {
-              const date = new Date((e.getElementsByClassName("comment-date")[0] as HTMLElement).title);
-              const voteCount = Number(e.getElementsByClassName("upvote-count")[0].textContent?.trim());
-              return {
-                date: isNaN(date.valueOf()) ? undefined : date.toISOString(),
-                voteCount: isNaN(voteCount) ? undefined : voteCount,
-                content: e.getElementsByClassName("comment-content")[0].innerHTML,
-              };
-            });
-          console.log(`Parsed topic ${topicNumber} question ${questionNumber}`);
-          return {
-            url: `${ORIGIN_BASE_URL}${link}`,
-            topic: topicNumber,
-            index: questionNumber,
-            body,
-            answer,
-            answerDescription,
-            options: options.length === 0 ? undefined : options,
-            votes: votes as Question["votes"],
-            comments
-          };
-        })
+        .then(doc => ({
+          ...parseQuestion(doc),
+          url: `${ORIGIN_BASE_URL}${link}`,
+        }))
     );
     // Concat the results
     try {
@@ -222,5 +182,47 @@ export const getQuestions = async (
     data: {
       questions: results,
     },
+  };
+};
+
+export const parseQuestion = (doc: Document) => {
+  const header = doc.querySelector(".question-discussion-header > div")?.innerHTML.trim().toLowerCase();
+  const [, topicNumber] = header?.match(/topic\s*#:\s*(\d+)/) ?? [];
+  const [, questionNumber] = header?.match(/question\s*#:\s*(\d+)/) ?? [];
+  const body = doc.querySelector(".question-body > .card-text")?.innerHTML.trim();
+  const options = Array.from(doc.querySelectorAll(".question-choices-container li"))
+    .map((e: Element) =>
+      e.innerHTML?.trim() ?? ""
+    );
+  const answer = doc.getElementsByClassName("correct-answer")[0]?.innerHTML.trim();
+  const answerDescription = doc.getElementsByClassName("answer-description")[0]?.innerHTML.trim();
+  let votes = doc.querySelector(".voted-answers-tally script")?.innerHTML.trim() ?? undefined;
+  if (votes) {
+    votes = JSON.parse(votes).map((e: any) => ({
+      answer: e.voted_answers,
+      count: e.vote_count,
+      isMostVoted: e.is_most_voted
+    }));
+  }
+  const comments = Array.from(doc.getElementsByClassName("comment-container"))
+    .map(e => {
+      const date = new Date((e.getElementsByClassName("comment-date")[0] as HTMLElement).title);
+      const voteCount = Number(e.getElementsByClassName("upvote-count")[0].textContent?.trim());
+      return {
+        date: isNaN(date.valueOf()) ? undefined : date.toISOString(),
+        voteCount: isNaN(voteCount) ? undefined : voteCount,
+        content: e.getElementsByClassName("comment-content")[0].innerHTML,
+      };
+    });
+  console.log(`Parsed topic ${topicNumber} question ${questionNumber}`);
+  return {
+    topic: topicNumber,
+    index: questionNumber,
+    body,
+    answer,
+    answerDescription,
+    options: options.length === 0 ? undefined : options,
+    votes: votes as Question["votes"],
+    comments
   };
 };
