@@ -1,21 +1,21 @@
 import Dropdown from "@/components/ui/dropdown";
 import InputText from "@/components/ui/inputtext";
-import { ExamContext } from "@/context/exam";
-import { ExamState } from "@/lib/examtopics";
+import { ExamContext, SessionState } from "@/context/exam";
 import { Question } from "@/lib/scraper";
 import _ from "lodash";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ChangeEvent, FC, PropsWithChildren, useContext, useMemo, useRef, useState } from "react";
-import { FaEllipsisVertical } from "react-icons/fa6";
+import { ChangeEvent, Dispatch, FC, PropsWithChildren, SetStateAction, useContext, useMemo, useRef, useState } from "react";
+import { FaEllipsisVertical, FaStar } from "react-icons/fa6";
 
 type SearchBoxProps = {
   questions: Question[] | undefined;
+  setSessionState: Dispatch<SetStateAction<SessionState>>;
 };
 
 const Layout: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
-  const { examState, exportExamState, saveExamState } = useContext(ExamContext);
+  const { examState, exportExamState, saveExamState, setSessionState } = useContext(ExamContext);
   const importRef = useRef<HTMLInputElement>(null);
   const isExamPage = router.pathname === "/exam";
   const hasExamState = examState?.provider && examState?.examCode;
@@ -59,7 +59,10 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
         }
         <div className="text-center flex-1">
           {(hasExamState && isExamPage) ?
-            <SearchBox questions={examState.questions} /> :
+            <SearchBox
+              questions={examState.questions}
+              setSessionState={setSessionState}
+            /> :
             <Link className="text-xl font-semibold" href="/">
               ExamTopics Scraper
             </Link>
@@ -94,8 +97,15 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
   </>;
 };
 
-const SearchBox: FC<SearchBoxProps> = ({ questions }) => {
+const SearchBox: FC<SearchBoxProps> = ({ questions, setSessionState }) => {
   const [searchText, setSearchText] = useState("");
+
+  const handleClick = (question: Question) => {
+    setSessionState(prev => ({
+      currentQuestion: question,
+      pastQuestionUrls: [...prev.pastQuestionUrls, question.url!]
+    }));
+  };
 
   const options = useMemo(() => {
     if (!searchText || !questions) return [];
@@ -103,9 +113,8 @@ const SearchBox: FC<SearchBoxProps> = ({ questions }) => {
 
     let filtered = questions
       ?.map(q => {
-        const { index, topic, body, url } = q;
         const matchIndex = q.body ? q.body.toLowerCase().indexOf(search) : -1;
-        return { index, topic, body, url, matchIndex };
+        return { ...q, matchIndex };
       })
       .filter(q => q.matchIndex !== -1);
 
@@ -118,9 +127,10 @@ const SearchBox: FC<SearchBoxProps> = ({ questions }) => {
       const endMatchIndex = q.matchIndex + searchText.length;
       const endIndex = endMatchIndex + 50 < q.body!.length ? q.matchIndex + 50 : q.body!.length;
       return {
-        label: <div key={i}>
-          <div className="text-sm">
+        label: <div key={i} onClick={() => handleClick(q)}>
+          <div className="flex gap-2 items-center text-sm">
             T{q.topic} Q{q.index}
+            {q.marked && <FaStar className="text-amber-400 ml-auto" size="0.75rem" />}
           </div>
           <div className="text-xs text-gray-500">
             {q.body!.slice(startIndex, q.matchIndex)}
@@ -131,7 +141,7 @@ const SearchBox: FC<SearchBoxProps> = ({ questions }) => {
         value: q.url
       };
     });
-  }, [questions, searchText]);
+  }, [questions, searchText, handleClick]);
 
   return <Dropdown
     options={options}

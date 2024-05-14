@@ -42,11 +42,25 @@ const srcToProxyUrl = (html?: string) => {
 };
 
 const Test = () => {
-  const { examState, saveExamState } = useContext(ExamContext);
-  const [currentQuestion, setCurrentQuestion] = useState<Question>();
+  const { examState, saveExamState, sessionState, setSessionState } = useContext(ExamContext);
   const [questions, setQuestions] = useState<Question[]>();
-  const [pastQuestionUrls, setPastQuestionUrls] = useState<string[]>([]);
   const [order, setOrder] = useState<"ascending" | "random">("ascending");
+
+  const { currentQuestion, pastQuestionUrls } = sessionState;
+
+  const setPastQuestionUrls = (value: string[] | ((prev: string[]) => string[])) => {
+    setSessionState(prev => ({
+      ...prev,
+      pastQuestionUrls: typeof value === "function" ? value(prev.pastQuestionUrls) : value
+    }));
+  };
+
+  const setCurrentQuestion = (value: Question | undefined | ((prev: Question | undefined) => Question | undefined)) => {
+    setSessionState(prev => ({
+      ...prev,
+      currentQuestion: typeof value === "function" ? value(prev.currentQuestion) : value
+    }));
+  };
 
   const handleReadFile = async (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();

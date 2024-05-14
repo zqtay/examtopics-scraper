@@ -1,17 +1,29 @@
 import { ExamState } from "@/lib/examtopics";
+import { Question } from "@/lib/scraper";
 import saveAs from "file-saver";
 import { useState, createContext, PropsWithChildren, Dispatch, SetStateAction, useEffect } from 'react';
 
 export const ExamContext = createContext({} as ExamContextProps);
 
+export type SessionState = {
+  currentQuestion: Question | undefined;
+  pastQuestionUrls: string[];
+};
+
 export type ExamContextProps = {
   examState: ExamState | undefined;
   saveExamState: (value: ExamState) => void;
   exportExamState: () => Promise<void>;
+  sessionState: SessionState;
+  setSessionState: Dispatch<SetStateAction<SessionState>>;
 };
 
 export const ExamStateProvider = ({ children }: PropsWithChildren) => {
   const [examState, setExamState] = useState<ExamState>();
+  const [sessionState, setSessionState] = useState<SessionState>({
+    currentQuestion: undefined,
+    pastQuestionUrls: [],
+  });
 
   const exportExamState = async () => {
     const blob = new Blob([JSON.stringify(examState)], { type: "text/plain;charset=utf-8" });
@@ -42,6 +54,8 @@ export const ExamStateProvider = ({ children }: PropsWithChildren) => {
     examState,
     saveExamState,
     exportExamState,
+    sessionState,
+    setSessionState,
   };
 
   return <ExamContext.Provider value={value}>{children}</ExamContext.Provider>;
