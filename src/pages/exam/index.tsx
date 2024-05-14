@@ -18,6 +18,7 @@ import Accordion from "@/components/ui/accordion";
 import TextArea from "@/components/ui/textarea";
 import { ExamContext } from "@/context/exam";
 import { formatDateString } from "@/lib/utils";
+import InputText from "@/components/ui/inputtext";
 
 type QuestionPageProps = Question & {
   update: (value: Partial<Question>) => void;
@@ -155,29 +156,20 @@ const Test = () => {
 
   return (
     <div className="h-full max-w-[48rem] mx-auto flex flex-col justify-center">
-      <div className="flex mb-4">
-        <Dropzone
-          className={classNames("flex-1 mr-2", {
-            "button-default": isLoaded
-          })}
-          boxClassName={classNames({
-            "bg-transparent border-none hover:bg-transparent": isLoaded
-          })}
-          labelClassName={classNames({
-            "bg-transparent text-white p-0": isLoaded
-          })}
-          label={!isLoaded ?
-            "Import questions data" :
-            `${examState?.provider?.toUpperCase()} ${examState?.examCode?.toUpperCase()}`
-          }
-          helperText={!isLoaded ? "JSON" : undefined}
-          icon={!isLoaded ?
-            <FaFileUpload className="size-8 mb-4 text-gray-500 dark:text-gray-400" /> :
-            undefined
-          }
-          accept=".json"
-          onChange={handleReadFile}
-        />
+      <div className="flex">
+        {isLoaded ?
+          <div className="flex-1 font-semibold text-lg">
+            {examState?.provider?.toUpperCase()} {examState?.examCode?.toUpperCase()}
+          </div> :
+          <Dropzone
+            className={classNames("flex-1 mr-2")}
+            label={"Import questions data"}
+            helperText={"JSON"}
+            icon={<FaFileUpload className="size-8 mb-4 text-gray-500 dark:text-gray-400" />}
+            accept=".json"
+            onChange={handleReadFile}
+          />
+        }
         {isLoaded && <>
           <Dropdown
             value={currentQuestion?.url}
@@ -190,17 +182,17 @@ const Test = () => {
               value: e.url,
             }))}
             className="mr-2"
-            buttonClassName="button-alt px-3 h-full"
+            buttonClassName="button-alt w-10 p-2"
             menuClassName="w-32 max-h-[24rem] overflow-y-auto -ml-10"
             label={null}
-            icon={<FaListOl size="1.25rem" />}
+            icon={<FaListOl size="1.25rem" className="mx-auto" />}
           />
           <button
-            className="button-alt px-3"
+            className="button-alt w-10 p-2"
             onClick={handleToggleOrder}
           >
-            {order === "ascending" && <FaSortNumericDown size="1.25rem" />}
-            {order === "random" && <FaRandom size="1.25rem" />}
+            {order === "ascending" && <FaSortNumericDown size="1rem" className="mx-auto" />}
+            {order === "random" && <FaRandom size="1rem" className="mx-auto" />}
           </button>
         </>}
       </div>
@@ -377,7 +369,7 @@ const QuestionPage: FC<QuestionPageProps> = ({
             <div className="flex items-center text-xs text-gray-500">
               {formatDateString(e.date)}
               {e.voteCount && <>
-                <FaRegThumbsUp className="ml-2 mr-1"/> {e.voteCount}
+                <FaRegThumbsUp className="ml-2 mr-1" /> {e.voteCount}
               </>}
             </div>
           </div>)}
