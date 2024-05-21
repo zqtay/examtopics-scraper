@@ -7,9 +7,11 @@ type ItemValue = string | number | undefined;
 type Item = {
   label: ReactNode;
   value: ItemValue;
+  disabled?: boolean;
 };
 
 type ItemProps = Item & {
+  active?: boolean;
   setSelected: Dispatch<SetStateAction<string | number | undefined>>;
   setMenuVisible: Dispatch<SetStateAction<boolean>>;
 };
@@ -25,12 +27,19 @@ type DropdownProps = {
   className?: string;
   buttonClassName?: string;
   menuClassName?: string;
+  toggleMenu?: (visible: boolean) => boolean;
+  menuHeader?: ReactNode;
 };
 
-const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
-  return <li className="cursor-pointer">
+const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible, disabled, active }) => {
+  return <li>
     <div
-      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+      className={classNames("block px-4 py-2",
+        {
+          "dropdown-menu-item": !disabled,
+          "dropdown-menu-item-active": active,
+        }
+      )}
       onClick={() => {
         setSelected(value);
         setMenuVisible(false);
@@ -42,12 +51,30 @@ const Item: FC<ItemProps> = ({ label, value, setSelected, setMenuVisible }) => {
 };
 
 const Dropdown: FC<DropdownProps> = ({
-  options, value, onChange, placeholder, disabled, label, icon, className, buttonClassName, menuClassName
+  options, 
+  value, 
+  onChange, 
+  placeholder, 
+  disabled, 
+  label, 
+  icon, 
+  className, 
+  buttonClassName, 
+  menuClassName, 
+  toggleMenu, 
+  menuHeader
 }) => {
   const [selected, setSelected] = useState<ItemValue>(value);
   const [menuVisible, setMenuVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = () => {
+    setMenuVisible(prev => {
+      if (toggleMenu) return toggleMenu(!prev);
+      return !prev;
+    });
+  }
 
   useEffect(() => {
     if (onChange) onChange(selected);
@@ -75,7 +102,7 @@ const Dropdown: FC<DropdownProps> = ({
       ref={buttonRef}
       className={classNames("button-default flex items-center", buttonClassName)}
       type="button"
-      onClick={() => setMenuVisible(prev => !prev)}
+      onClick={handleToggle}
       disabled={disabled}
     >
       {label ?? ((label === undefined) &&
@@ -91,14 +118,19 @@ const Dropdown: FC<DropdownProps> = ({
         hidden: !menuVisible
       })}
     >
-      <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
+      {menuHeader && <div className="py-2 px-4">
+        {menuHeader}
+      </div>} 
+      <ul className="dropdown-menu-items">
         {options && options.map((e, i) =>
           <Item
             key={i}
             label={e.label}
             value={e.value}
+            disabled={e.disabled}
             setSelected={setSelected}
             setMenuVisible={setMenuVisible}
+            active={value === e.value}
           />
         )}
       </ul>

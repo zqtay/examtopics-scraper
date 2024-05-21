@@ -5,17 +5,18 @@ import { Question } from "@/lib/scraper";
 import _ from "lodash";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ChangeEvent, Dispatch, FC, PropsWithChildren, SetStateAction, useContext, useMemo, useRef, useState } from "react";
-import { FaEllipsisVertical, FaStar } from "react-icons/fa6";
+import { ChangeEvent, Dispatch, FC, PropsWithChildren, SetStateAction, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { FaEllipsisVertical, FaStar, FaMagnifyingGlass } from "react-icons/fa6";
 
 type SearchBoxProps = {
   questions: Question[] | undefined;
+  sessionState: SessionState;
   setSessionState: Dispatch<SetStateAction<SessionState>>;
 };
 
 const Layout: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
-  const { examState, exportExamState, saveExamState, setSessionState } = useContext(ExamContext);
+  const { examState, exportExamState, saveExamState, sessionState, setSessionState } = useContext(ExamContext);
   const importRef = useRef<HTMLInputElement>(null);
   const isExamPage = router.pathname === "/exam";
   const hasExamState = examState?.provider && examState?.examCode;
@@ -61,9 +62,10 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
           {(hasExamState && isExamPage) ?
             <SearchBox
               questions={examState.questions}
+              sessionState={sessionState}
               setSessionState={setSessionState}
             /> :
-            <Link className="text-xl font-semibold" href="/">
+            <Link className="block text-xl font-semibold w-max" href="/">
               ExamTopics Scraper
             </Link>
           }
@@ -97,7 +99,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
   </>;
 };
 
-const SearchBox: FC<SearchBoxProps> = ({ questions, setSessionState }) => {
+const SearchBox: FC<SearchBoxProps> = ({ questions, sessionState, setSessionState }) => {
   const [searchText, setSearchText] = useState("");
 
   const handleClick = (question: Question) => {
@@ -143,17 +145,30 @@ const SearchBox: FC<SearchBoxProps> = ({ questions, setSessionState }) => {
     });
   }, [questions, searchText, handleClick]);
 
+  const menuHeader = useMemo(() => {
+    return <div className="text-xs text-gray-700">
+      {options.length} question{options.length > 0 ? "s" : ""} found
+    </div>
+  }, [options]);
+
+  const inputBox = useMemo(() => <InputText
+    className="w-full"
+    boxClassName="w-full -my-1.5 py-2 font-normal"
+    placeholder="Search"
+    value={searchText}
+    icon={<FaMagnifyingGlass />}
+    onChange={e => setSearchText(e.target.value)}
+  />, [searchText, setSearchText]);
+
   return <Dropdown
     options={options}
+    value={sessionState.currentQuestion?.url}
     buttonClassName="p-0 border-0 w-full"
-    menuClassName="fixed left-0 w-full max-h-[50vh] overflow-y-auto text-left mt-3"
-    icon={<InputText
-      className="w-full"
-      boxClassName="w-full -my-1.5 py-2 text-center font-normal"
-      placeholder="Search"
-      value={searchText}
-      onChange={e => setSearchText(e.target.value)}
-    />}
+    menuClassName="fixed md:absolute left-0 w-full max-h-[50vh] text-left mt-3"
+    label={inputBox}
+    icon={null}
+    toggleMenu={() => true}
+    menuHeader={menuHeader}
   />;
 };
 

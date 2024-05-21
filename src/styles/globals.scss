@@ -41,13 +41,26 @@
   }
 
   .dropdown-menu {
-    @apply z-10 bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 absolute w-full;
+    @apply z-10 bg-white rounded-lg shadow  text-gray-700 dark:text-gray-200 absolute w-full overflow-y-auto;
     -ms-overflow-style: none;
     scrollbar-width: none;
 
     &::-webkit-scrollbar {
       display: none;
     }
+  }
+
+  .dropdown-menu-items {
+    @apply divide-y divide-gray-100;
+    @apply py-2 text-sm;
+  }
+
+  .dropdown-menu-item {
+    @apply cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white;
+  }
+
+  .dropdown-menu-item-active {
+    @apply bg-blue-100 dark:bg-blue-700;
   }
 
   .inputtext-label {
