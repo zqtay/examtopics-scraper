@@ -21,11 +21,22 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    session: async ({ session, user, token }) => {
-      console.log(session, user,token)
-      session.user.role = user?.role;
+    session: async ({ session, token }) => {
+      session.user.role = token?.role;
       return session;
+    },
+    jwt: async ({ token, user, trigger }) => {
+      if (trigger === "signIn") {
+        // This will run when user signs in
+        if (user) {
+          token.role = user.role;
+        }
+      }
+      return token;
     }
+  },
+  session: {
+    strategy: "jwt",
   }
 };
 
