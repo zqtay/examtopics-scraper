@@ -1,9 +1,10 @@
 import Accordion from "@/components/ui/accordion";
 import Toggle from "@/components/ui/toggle";
+import { AdminScraperState } from "@/lib/admin";
 import { ChangeEvent, useEffect, useState } from "react";
 
 const Admin = () => {
-  const [scraper, setScraper] = useState<any>();
+  const [scraper, setScraper] = useState<AdminScraperState>();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const updated = { ...scraper, enabled: e.target.checked };
