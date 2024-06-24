@@ -26,7 +26,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
 
   const menuItems = [
     ...(router.pathname === "/") ? [{
-      label: <a href="/exam">Exam</a>,
+      label: <Link href="/exam">Exam</Link>,
       value: "import"
     }] : [],
     ...(isExamPage) ? [{
@@ -38,7 +38,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
       value: "export"
     }] : [],
     ...(session?.user?.role === "admin") ? [{
-      label: <a href="/admin">Admin</a>,
+      label: <Link href="/admin">Admin</Link>,
       value: "admin"
     }] : []
   ];
