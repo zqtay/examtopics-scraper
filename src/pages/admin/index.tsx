@@ -31,7 +31,10 @@ const Admin = () => {
 
   if (sessionStatus === "loading") {
     return <></>;
-  } else if (session?.user?.role !== "admin") {
+  } else if (!session) {
+    router.push("/api/auth/signin?callbackUrl=/admin");
+    return <></>;
+  } if (session?.user?.role !== "admin") {
     return <>Unauthorized</>;
   }
 
