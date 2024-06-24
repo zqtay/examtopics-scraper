@@ -1,10 +1,14 @@
 import Accordion from "@/components/ui/accordion";
 import Toggle from "@/components/ui/toggle";
 import { AdminScraperState } from "@/lib/admin";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import { ChangeEvent, useEffect, useState } from "react";
 
 const Admin = () => {
+  const { data: session, status: sessionStatus } = useSession();
   const [scraper, setScraper] = useState<AdminScraperState>();
+  const router = useRouter();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const updated = { ...scraper, enabled: e.target.checked };
@@ -20,8 +24,16 @@ const Admin = () => {
   };
 
   useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (session?.user?.role !== "admin") return;
     fetch("/api/admin/scraper").then(res => res.json()).then(setScraper);
-  }, []);
+  }, [sessionStatus, session]);
+
+  if (sessionStatus === "loading") {
+    return <></>;
+  } else if (session?.user?.role !== "admin") {
+    return <>Unauthorized</>;
+  }
 
   return <div>
     <div className="text-xl font-semibold mb-2">Admin</div>

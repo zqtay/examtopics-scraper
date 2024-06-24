@@ -3,6 +3,7 @@ import InputText from "@/components/ui/inputtext";
 import { ExamContext, SessionState } from "@/context/exam";
 import { Question } from "@/lib/scraper";
 import _ from "lodash";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { ChangeEvent, Dispatch, FC, PropsWithChildren, SetStateAction, useCallback, useContext, useMemo, useRef, useState } from "react";
@@ -18,12 +19,14 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
   const { examState, exportExamState, saveExamState, sessionState, setSessionState } = useContext(ExamContext);
   const importRef = useRef<HTMLInputElement>(null);
+  const { data: session } = useSession();
+
   const isExamPage = router.pathname === "/exam";
   const hasExamState = examState?.provider && examState?.examCode;
 
   const menuItems = [
     ...(router.pathname === "/") ? [{
-      label: <div onClick={() => router.push("/exam")}>Exam</div>,
+      label: <a href="/exam">Exam</a>,
       value: "import"
     }] : [],
     ...(isExamPage) ? [{
@@ -34,6 +37,10 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
       label: <div onClick={exportExamState}>Export</div>,
       value: "export"
     }] : [],
+    ...(session?.user?.role === "admin") ? [{
+      label: <a href="/admin">Admin</a>,
+      value: "admin"
+    }] : []
   ];
 
   const handleFileRead = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +155,7 @@ const SearchBox: FC<SearchBoxProps> = ({ questions, sessionState, setSessionStat
   const menuHeader = useMemo(() => {
     return <div className="text-xs text-gray-700">
       {options.length} question{options.length > 0 ? "s" : ""} found
-    </div>
+    </div>;
   }, [options]);
 
   const inputBox = useMemo(() => <InputText
