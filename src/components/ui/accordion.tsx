@@ -1,4 +1,4 @@
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useEffect, useState } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 type AccordionProps = {
@@ -9,18 +9,29 @@ type AccordionProps = {
 };
 
 const Accordion: FC<AccordionProps> = ({ label, collapsed, children, toggle }) => {
+  const [isCollapsed, setIsCollapsed] = useState(collapsed ?? false);
+
+  const _toggler = () => {
+    setIsCollapsed(prev => !prev);
+  };
+
+  useEffect(() => {
+    // Overwrite internal state
+    setIsCollapsed(collapsed ?? false);
+  }, [collapsed])
+
   return <div>
     <div
       className="flex font-semibold mb-4 items-center cursor-pointer"
-      onClick={toggle}
+      onClick={toggle ?? _toggler}
     >
       {label}
-      {collapsed ?
+      {isCollapsed ?
         <FaChevronDown className="ml-auto" /> :
         <FaChevronUp className="ml-auto" />
       }
     </div>
-    {!collapsed && children}
+    {!isCollapsed && children}
   </div>;
 };
 
