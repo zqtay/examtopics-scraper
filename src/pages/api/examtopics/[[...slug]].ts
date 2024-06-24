@@ -1,4 +1,5 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import { scraperState } from "@/lib/admin";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Readable } from "stream";
 
@@ -9,6 +10,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  if (!scraperState.enabled) {
+    return res.status(403).json({ message: "Scraper is disabled" });
+  }
   const match = req.url?.match(regex);
   if (!match || !match[1]) {
     return res.status(404).end();
