@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@prisma/client": "^5.15.1",
     "classnames": "^2.5.1",
     "file-saver": "^2.0.5",
     "lodash": "^4.17.21",
@@ -40,5 +41,8 @@
     "supertest": "^6.3.4",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
 }
