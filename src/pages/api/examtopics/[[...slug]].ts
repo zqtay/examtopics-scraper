@@ -1,5 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import { scraperState } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
+import { SettingsId } from "@/types/settings";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Readable } from "stream";
 
@@ -10,7 +11,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  if (!scraperState.enabled) {
+  const data: any = await prisma.settings.findUnique({
+    where: { id: SettingsId.SCRAPER }
+  });
+  if (!data?.value?.enabled) {
     return res.status(403).json({ message: "Scraper is disabled" });
   }
   const match = req.url?.match(regex);

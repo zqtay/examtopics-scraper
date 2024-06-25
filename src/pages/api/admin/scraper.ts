@@ -1,4 +1,5 @@
-import { scraperState } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
+import { SettingsId } from "@/types/settings";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ApiError } from "next/dist/server/api-utils";
 
@@ -25,7 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 const handleGet = async (req: NextApiRequest, res: NextApiResponse) => {
-  return res.status(200).json(scraperState);
+  const settings: any = await prisma.settings.findUnique({
+    where: { id: SettingsId.SCRAPER }
+  });
+  return res.status(200).json(settings?.value);
 };
 
 const handlePut = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -33,6 +37,13 @@ const handlePut = async (req: NextApiRequest, res: NextApiResponse) => {
   if (typeof enabled !== "boolean") {
     throw new ApiError(400, "Invalid request body");
   }
-  scraperState.enabled = enabled;
-  return res.status(200).json(scraperState);
+  let data: any = await prisma.settings.findUnique({
+    where: { id: SettingsId.SCRAPER }
+  });
+  data = { ...data, value: { ...data.value, enabled } };
+  await prisma.settings.update({
+    where: { id: SettingsId.SCRAPER },
+    data: data
+  });
+  return res.status(200).json(data);
 };
