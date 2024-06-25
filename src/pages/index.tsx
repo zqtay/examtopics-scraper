@@ -11,7 +11,7 @@ import { saveAs } from 'file-saver';
 import ProgressBar from "@/components/ui/progressbar";
 import { useRouter } from "next/router";
 import { ExamContext } from "@/context/exam";
-import { AdminScraperState } from "@/lib/admin";
+import { AdminScraperSettings } from "@/types/settings";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +25,7 @@ const Home: FC = () => {
     max: 0,
   });
   const { settings } = useContext(SettingsContext);
-  const [adminState, setAdminState] = useState<AdminScraperState>();
+  const [adminState, setAdminState] = useState<AdminScraperSettings>();
 
   const updateProgress = (value: number, max: number) => {
     setProgress(prev => ({ ...prev, value, max }));

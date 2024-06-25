@@ -1,13 +1,13 @@
 import Accordion from "@/components/ui/accordion";
 import Toggle from "@/components/ui/toggle";
-import { AdminScraperState } from "@/lib/admin";
+import { AdminScraperSettings } from "@/types/settings";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { ChangeEvent, useEffect, useState } from "react";
 
 const Admin = () => {
   const { data: session, status: sessionStatus } = useSession();
-  const [scraper, setScraper] = useState<AdminScraperState>();
+  const [scraper, setScraper] = useState<AdminScraperSettings>();
   const router = useRouter();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
