@@ -11,7 +11,7 @@ import { saveAs } from 'file-saver';
 import ProgressBar from "@/components/ui/progressbar";
 import { useRouter } from "next/router";
 import { ExamContext } from "@/context/exam";
-import { AdminScraperState, getScraperState, scraperState } from "@/lib/admin";
+import { AdminScraperState } from "@/lib/admin";
 
 const inter = Inter({ subsets: ["latin"] });
 

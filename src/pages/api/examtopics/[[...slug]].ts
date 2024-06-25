@@ -28,3 +28,7 @@ export default async function handler(
     Readable.fromWeb(fwdRes.body).pipe(res);
   }
 }
+
+export const config = {
+  maxDuration: 60,
+};
