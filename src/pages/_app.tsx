@@ -4,6 +4,7 @@ import Layout from "@/layout";
 import { SettingsProvider } from "@/context/settings";
 import { ExamStateProvider } from "@/context/exam";
 import Head from "next/head";
+import { SessionProvider } from "next-auth/react";
 
 export default function App({ Component, pageProps }: AppProps) {
   return <>
@@ -17,12 +18,14 @@ export default function App({ Component, pageProps }: AppProps) {
       <meta property="og:url" content="https://examtopics-scraper.vercel.app"></meta>
       <meta property="og:description" content="An app for scraping and running ExamTopics questions" />
     </Head>
-    <SettingsProvider>
-      <ExamStateProvider>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </ExamStateProvider>
-    </SettingsProvider>
+    <SessionProvider>
+      <SettingsProvider>
+        <ExamStateProvider>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </ExamStateProvider>
+      </SettingsProvider>
+    </SessionProvider>
   </>;
 }

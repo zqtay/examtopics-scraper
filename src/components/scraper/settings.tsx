@@ -12,7 +12,6 @@ type SettingsProps = {
 const Settings: FC<SettingsProps> = ({ disabled }) => {
   const { settings, saveSettings } = useContext(SettingsContext);
   const [draft, setDraft] = useState<ScraperSettings>(settings);
-  const [visible, setVisible] = useState(false);
 
   const handleSave = () => {
     saveSettings(draft);
@@ -24,8 +23,7 @@ const Settings: FC<SettingsProps> = ({ disabled }) => {
 
   return <Accordion
     label="Settings"
-    collapsed={!visible}
-    toggle={() => setVisible(prev => !prev)}
+    collapsed={true}
   >
     <div className="mb-4">
       <div className="mb-2">Fetch question links</div>

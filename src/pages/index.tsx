@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import { Question, ScraperState, getQuestionLinks, getQuestions } from "@/lib/scraper";
-import { useContext, useEffect, useRef, useState } from "react";
+import { FC, useContext, useEffect, useRef, useState } from "react";
 import Dropdown from "@/components/ui/dropdown";
 import Spinner from "@/components/ui/spinner";
 import InputText from "@/components/ui/inputtext";
@@ -11,10 +11,11 @@ import { saveAs } from 'file-saver';
 import ProgressBar from "@/components/ui/progressbar";
 import { useRouter } from "next/router";
 import { ExamContext } from "@/context/exam";
+import { AdminScraperSettings } from "@/types/settings";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home() {
+const Home: FC = () => {
   const router = useRouter();
   const { examState, saveExamState, exportExamState } = useContext(ExamContext);
   const [state, setState] = useState<ScraperState>({ provider: "", examCode: "" });
@@ -24,6 +25,7 @@ export default function Home() {
     max: 0,
   });
   const { settings } = useContext(SettingsContext);
+  const [adminState, setAdminState] = useState<AdminScraperSettings>();
 
   const updateProgress = (value: number, max: number) => {
     setProgress(prev => ({ ...prev, value, max }));
@@ -101,6 +103,11 @@ export default function Home() {
   const isCompleted = state?.questionLinks && state?.questions &&
     state?.questionLinks?.length === state?.questions?.length;
 
+    
+  useEffect(() => {
+    fetch("/api/admin/scraper").then(res => res.json()).then(setAdminState);
+  }, []);
+
   useEffect(() => {
     // Reset fields
     setState(prev => ({
@@ -122,6 +129,17 @@ export default function Home() {
       });
     }
   }, [isInterrupted, isCompleted]);
+
+  if (adminState === undefined) {
+    return <></>;
+  } else if (!adminState?.enabled) {
+    return <div className="max-w-[48rem] mx-auto flex flex-col justify-center">
+      <div className="text-lg font-semibold text-center mt-48" >
+        Scraper function is disabled
+      </div>
+      <button className="button-default w-full mt-4" onClick={() => window.location.href = "/exam"}>Go to Exam</button>
+    </div>;
+  }
 
   return (
     <div className="max-w-[48rem] mx-auto flex flex-col justify-center">
@@ -199,3 +217,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default Home;
