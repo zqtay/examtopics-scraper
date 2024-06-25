@@ -72,7 +72,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
               sessionState={sessionState}
               setSessionState={setSessionState}
             /> :
-            <Link className="block text-xl font-semibold w-full" href="/">
+            <Link className="block text-xl font-semibold w-max mx-auto" href="/">
               ExamTopics Scraper
             </Link>
           }
