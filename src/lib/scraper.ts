@@ -1,51 +1,7 @@
-import { ExamState } from "./examtopics";
+import { GetQuestionLinksResponse, GetQuestionsResponse } from "@/types/scraper";
 import { fetchPage } from "./fetcher";
 import { sleep } from "./utils";
-
-export type Question = {
-  topic: string | undefined;
-  index: string | undefined;
-  url: string | undefined;
-  body: string | undefined;
-  answer: string;
-  answerDescription: string;
-  options: string[] | undefined;
-  votes: {
-    answer: string;
-    count: number;
-    isMostVoted: boolean;
-  }[] | undefined;
-  comments: {
-    date?: string;
-    voteCount?: number;
-    content?: string;
-  }[];
-  notes?: string;
-  marked?: boolean;
-};
-
-export type GetQuestionLinksResponse = {
-  status: "success" | "error";
-  data: {
-    lastIndex?: number;
-    links: string[];
-  },
-};
-
-export type GetQuestionsResponse = {
-  status: "success" | "error";
-  data: {
-    lastIndex?: number;
-    questions: Question[];
-  },
-};
-
-export type ScraperState = {
-  isInProgress?: boolean;
-  lastDiscussionListPageIndex?: number;
-  lastQuestionLinkIndex?: number;
-  questionLinks?: string[];
-} & ExamState;
+import { Question } from "@/types/exam";
 
 export const PROXY_BASE_URL = "/api/examtopics";
 const ORIGIN_BASE_URL = "https://www.examtopics.com";
