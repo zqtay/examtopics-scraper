@@ -1,19 +1,15 @@
-import { Inter } from "next/font/google";
-import { Question, ScraperState, getQuestionLinks, getQuestions } from "@/lib/scraper";
-import { FC, useContext, useEffect, useRef, useState } from "react";
-import Dropdown from "@/components/ui/dropdown";
-import Spinner from "@/components/ui/spinner";
-import InputText from "@/components/ui/inputtext";
-import { providerOptions } from "@/lib/examtopics";
-import { SettingsContext } from "@/context/settings";
-import Settings from "@/components/scraper/settings";
-import { saveAs } from 'file-saver';
-import ProgressBar from "@/components/ui/progressbar";
+import { FC, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Settings from "@/components/scraper/settings";
+import Dropdown from "@/components/ui/dropdown";
+import InputText from "@/components/ui/inputtext";
+import ProgressBar from "@/components/ui/progressbar";
 import { ExamContext } from "@/context/exam";
+import { SettingsContext } from "@/context/settings";
+import { providerOptions } from "@/lib/examtopics";
+import { getQuestionLinks, getQuestions } from "@/lib/scraper";
 import { AdminScraperSettings } from "@/types/settings";
-
-const inter = Inter({ subsets: ["latin"] });
+import { ScraperState } from "@/types/scraper";
 
 const Home: FC = () => {
   const router = useRouter();
@@ -103,7 +99,7 @@ const Home: FC = () => {
   const isCompleted = state?.questionLinks && state?.questions &&
     state?.questionLinks?.length === state?.questions?.length;
 
-    
+
   useEffect(() => {
     fetch("/api/admin/scraper").then(res => res.json()).then(setAdminState);
   }, []);

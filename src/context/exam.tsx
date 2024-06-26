@@ -1,26 +1,14 @@
-import { ExamState } from "@/lib/examtopics";
-import { Question } from "@/lib/scraper";
+import { ExamContextProps, ExamSession } from "@/types/exam";
+import { ExamState } from "@/types/exam";
 import saveAs from "file-saver";
-import { useState, createContext, PropsWithChildren, Dispatch, SetStateAction, useEffect } from 'react';
+import { useState, createContext, PropsWithChildren, useEffect } from 'react';
 
 export const ExamContext = createContext({} as ExamContextProps);
 
-export type SessionState = {
-  currentQuestion: Question | undefined;
-  pastQuestionUrls: string[];
-};
-
-export type ExamContextProps = {
-  examState: ExamState | undefined;
-  saveExamState: (value: ExamState) => void;
-  exportExamState: () => Promise<void>;
-  sessionState: SessionState;
-  setSessionState: Dispatch<SetStateAction<SessionState>>;
-};
-
 export const ExamStateProvider = ({ children }: PropsWithChildren) => {
   const [examState, setExamState] = useState<ExamState>();
-  const [sessionState, setSessionState] = useState<SessionState>({
+  const [examSession, setExamSession] = useState<ExamSession>({
+    order: "ascending",
     currentQuestion: undefined,
     pastQuestionUrls: [],
   });
@@ -54,8 +42,8 @@ export const ExamStateProvider = ({ children }: PropsWithChildren) => {
     examState,
     saveExamState,
     exportExamState,
-    sessionState,
-    setSessionState,
+    examSession,
+    setExamSession,
   };
 
   return <ExamContext.Provider value={value}>{children}</ExamContext.Provider>;

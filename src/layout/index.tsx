@@ -1,23 +1,16 @@
+import SearchBox from "@/components/exam/seachbox";
 import Dropdown from "@/components/ui/dropdown";
-import InputText from "@/components/ui/inputtext";
-import { ExamContext, SessionState } from "@/context/exam";
-import { Question } from "@/lib/scraper";
+import { ExamContext } from "@/context/exam";
 import _ from "lodash";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ChangeEvent, Dispatch, FC, PropsWithChildren, SetStateAction, useCallback, useContext, useMemo, useRef, useState } from "react";
-import { FaEllipsisVertical, FaStar, FaMagnifyingGlass } from "react-icons/fa6";
-
-type SearchBoxProps = {
-  questions: Question[] | undefined;
-  sessionState: SessionState;
-  setSessionState: Dispatch<SetStateAction<SessionState>>;
-};
+import { ChangeEvent, FC, PropsWithChildren, useContext, useRef } from "react";
+import { FaEllipsisVertical } from "react-icons/fa6";
 
 const Layout: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
-  const { examState, exportExamState, saveExamState, sessionState, setSessionState } = useContext(ExamContext);
+  const { examState, exportExamState, saveExamState, examSession, setExamSession } = useContext(ExamContext);
   const importRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
 
@@ -69,8 +62,8 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
           {(hasExamState && isExamPage) ?
             <SearchBox
               questions={examState.questions}
-              sessionState={sessionState}
-              setSessionState={setSessionState}
+              session={examSession}
+              setSession={setExamSession}
             /> :
             <Link className="block text-xl font-semibold w-max mx-auto" href="/">
               ExamTopics Scraper
@@ -106,77 +99,5 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
   </>;
 };
 
-const SearchBox: FC<SearchBoxProps> = ({ questions, sessionState, setSessionState }) => {
-  const [searchText, setSearchText] = useState("");
-
-  const handleClick = (question: Question) => {
-    setSessionState(prev => ({
-      currentQuestion: question,
-      pastQuestionUrls: [...prev.pastQuestionUrls, question.url!]
-    }));
-  };
-
-  const options = useMemo(() => {
-    if (!searchText || !questions) return [];
-    const search = searchText.toLowerCase();
-
-    let filtered = questions
-      ?.map(q => {
-        const matchIndex = q.body ? q.body.toLowerCase().indexOf(search) : -1;
-        return { ...q, matchIndex };
-      })
-      .filter(q => q.matchIndex !== -1);
-
-    filtered = _.sortBy(
-      filtered,
-      o => `${("0000" + o.topic).slice(-4)}-${("0000" + o.index).slice(-4)}`);
-
-    return filtered.map((q, i) => {
-      const startIndex = q.matchIndex - 50 > 0 ? q.matchIndex - 50 : 0;
-      const endMatchIndex = q.matchIndex + searchText.length;
-      const endIndex = endMatchIndex + 50 < q.body!.length ? q.matchIndex + 50 : q.body!.length;
-      return {
-        label: <div key={i} onClick={() => handleClick(q)}>
-          <div className="flex gap-2 items-center text-sm">
-            T{q.topic} Q{q.index}
-            {q.marked && <FaStar className="text-amber-400 ml-auto" size="0.75rem" />}
-          </div>
-          <div className="text-xs text-gray-500">
-            {q.body!.slice(startIndex, q.matchIndex)}
-            <span className="font-bold text-black">{q.body!.slice(q.matchIndex, endMatchIndex)}</span>
-            {q.body!.slice(endMatchIndex, endIndex)}
-          </div>
-        </div>,
-        value: q.url
-      };
-    });
-  }, [questions, searchText, handleClick]);
-
-  const menuHeader = useMemo(() => {
-    return <div className="text-xs text-gray-700">
-      {options.length} question{options.length > 0 ? "s" : ""} found
-    </div>;
-  }, [options]);
-
-  const inputBox = useMemo(() => <InputText
-    className="w-full"
-    boxClassName="w-full -my-1.5 py-2 font-normal"
-    placeholder="Search"
-    value={searchText}
-    icon={<FaMagnifyingGlass />}
-    onChange={e => setSearchText(e.target.value)}
-  />, [searchText, setSearchText]);
-
-  return <Dropdown
-    options={options}
-    value={sessionState.currentQuestion?.url}
-    buttonClassName="p-0 border-0 w-full"
-    menuClassName="fixed md:absolute left-0 w-full max-h-[50vh] text-left mt-3"
-    label={inputBox}
-    icon={null}
-    toggleMenu={() => true}
-    menuHeader={menuHeader}
-  />;
-};
 
 export default Layout;
