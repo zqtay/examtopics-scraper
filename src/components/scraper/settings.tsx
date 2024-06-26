@@ -1,9 +1,8 @@
-import { ScraperSettings, SettingsContext } from "@/context/settings";
 import { FC, useContext, useEffect, useState } from "react";
-import InputText from "../ui/inputtext";
 import _ from "lodash";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { ScraperSettings, SettingsContext } from "@/context/settings";
 import Accordion from "../ui/accordion";
+import InputText from "../ui/inputtext";
 
 type SettingsProps = {
   disabled?: boolean;

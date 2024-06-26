@@ -1,11 +1,4 @@
 import { fetchPage } from "./fetcher";
-import { Question } from "./scraper";
-
-export type ExamState = {
-  provider?: string;
-  examCode?: string;
-  questions?: Question[];
-};
 
 export const providerOptions = [
   {
