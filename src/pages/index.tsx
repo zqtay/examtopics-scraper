@@ -10,6 +10,7 @@ import { providerOptions } from "@/lib/examtopics";
 import { getQuestionLinks, getQuestions } from "@/lib/scraper";
 import { AdminScraperSettings } from "@/types/settings";
 import { ScraperState } from "@/types/scraper";
+import { useSession } from "next-auth/react";
 
 const Home: FC = () => {
   const router = useRouter();
@@ -21,7 +22,8 @@ const Home: FC = () => {
     max: 0,
   });
   const { settings } = useContext(SettingsContext);
-  const [adminState, setAdminState] = useState<AdminScraperSettings>();
+  const [adminSettings, setAdminSettings] = useState<AdminScraperSettings>();
+  const { data: session, status: sessionStatus } = useSession();
 
   const updateProgress = (value: number, max: number) => {
     setProgress(prev => ({ ...prev, value, max }));
@@ -101,7 +103,7 @@ const Home: FC = () => {
 
 
   useEffect(() => {
-    fetch("/api/admin/scraper").then(res => res.json()).then(setAdminState);
+    fetch("/api/admin/scraper").then(res => res.json()).then(setAdminSettings);
   }, []);
 
   useEffect(() => {
@@ -126,9 +128,11 @@ const Home: FC = () => {
     }
   }, [isInterrupted, isCompleted]);
 
-  if (adminState === undefined) {
+  if (adminSettings === undefined || sessionStatus === "loading") {
     return <></>;
-  } else if (!adminState?.enabled) {
+  } else if (!(adminSettings?.access === "public" ||
+    (adminSettings?.access === "restricted" && session?.user?.role && adminSettings.allowedRoles.includes(session?.user?.role))
+  )) {
     return <div className="max-w-[48rem] mx-auto flex flex-col justify-center">
       <div className="text-lg font-semibold text-center mt-48" >
         Scraper function is disabled
@@ -212,6 +216,6 @@ const Home: FC = () => {
       <Settings disabled={state?.isInProgress} />
     </div>
   );
-}
+};
 
 export default Home;

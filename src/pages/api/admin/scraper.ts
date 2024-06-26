@@ -1,11 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { SettingsId } from "@/types/settings";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth";
 import { ApiError } from "next/dist/server/api-utils";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const method = req.method;
+  const session = await getServerSession(req, res, authOptions);
+  if (method === "PUT") {
+    if (!session) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (session.user.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+  }
   try {
-    const method = req.method;
     switch (method) {
       case "GET":
         return await handleGet(req, res);
@@ -33,14 +44,19 @@ const handleGet = async (req: NextApiRequest, res: NextApiResponse) => {
 };
 
 const handlePut = async (req: NextApiRequest, res: NextApiResponse) => {
-  const { enabled } = req.body;
-  if (typeof enabled !== "boolean") {
-    throw new ApiError(400, "Invalid request body");
-  }
+  const { access, whitelistPaths, allowedRoles } = req.body;
   let data: any = await prisma.settings.findUnique({
     where: { id: SettingsId.SCRAPER }
   });
-  data = { ...data, value: { ...data.value, enabled } };
+  data = {
+    ...data,
+    value: {
+      ...data.value,
+      access,
+      whitelistPaths,
+      allowedRoles
+    }
+  };
   await prisma.settings.update({
     where: { id: SettingsId.SCRAPER },
     data: data
