@@ -7,7 +7,11 @@ const tables = ["Settings"];
 const settings = [
   {
     name: "scraper",
-    value: { enabled: true },
+    value: { 
+      access: "public",
+      whitelistPaths: ["assets"],
+      allowedRoles: ["admin"],
+    },
   },
 ];
 
