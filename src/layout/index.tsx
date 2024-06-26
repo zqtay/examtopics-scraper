@@ -73,7 +73,7 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
         <div className={(hasExamState && isExamPage) ? "" : "flex-1"}>
           <Dropdown
             options={menuItems}
-            buttonClassName="ml-auto button-alt items-end border-0 p-0"
+            buttonClassName="ml-auto button-alt items-end border-0 px-0 py-1"
             menuClassName="w-20 right-0 mt-4 z-20"
             label={null}
             icon={<FaEllipsisVertical
