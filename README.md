@@ -23,8 +23,13 @@ POSTGRES_PRISMA_URL=postgres://...
 ```sh
 npx prisma generate
 ```
-5. Run development server
+5. (Optional) For new database, initialize and seed tables
+```sh
+npx prisma db push
+npx prisma db seed
+```
+6. Run development server
 ```sh
 npm run dev
 ```
-6. Open `http://localhost:3000` in browser
+7. Open `http://localhost:3000` in browser
