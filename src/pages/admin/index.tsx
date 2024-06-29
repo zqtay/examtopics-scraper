@@ -75,16 +75,19 @@ const Admin = () => {
           label={"Access level"}
           value={scraper?.access}
           onChange={e => setScraper(prev => ({ ...prev!, access: e.target.value }))}
+          placeholder="public, restricted, none"
         />
         <TextArea
           label={"Whitelisted URL paths"}
           value={scraper?.whitelistPaths}
           onChange={e => setScraper(prev => ({ ...prev!, whitelistPaths: e.target.value }))}
+          placeholder={`["assets"]`}
         />
         <TextArea
           label={"Allowed roles"}
           value={scraper?.allowedRoles}
           onChange={e => setScraper(prev => ({ ...prev!, allowedRoles: e.target.value }))}
+          placeholder={`["admin"]`}
         />
       </div>
       <button
